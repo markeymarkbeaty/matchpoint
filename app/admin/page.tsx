@@ -115,7 +115,7 @@ export default function PicksPage() {
         className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden"
       >
         <div className="bg-zinc-800 px-6 py-4 border-b border-zinc-700">
-          <p className="text-lg font-semibold tracking-tight">
+          <p className="text-base italic font-medium text-zinc-300 tracking-tight">
             {formatMatchDate(match.date)}
           </p>
         </div>
