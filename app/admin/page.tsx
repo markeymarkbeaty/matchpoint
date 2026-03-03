@@ -7,28 +7,41 @@ import { motion } from 'framer-motion'
 import BottomNav from '../../components/BottomNav'
 
 export default function PicksPage() {
-  const [matches, setMatches] = useState<any[]>([])
+  const [upcomingMatches, setUpcomingMatches] = useState<any[]>([])
+  const [pastMatches, setPastMatches] = useState<any[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loadingMatchId, setLoadingMatchId] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    const checkUser = async () => {
+    const init = async () => {
       const { data } = await supabase.auth.getUser()
-      if (!data.user) router.push('/login')
-    }
+      if (!data.user) {
+        router.push('/login')
+        return
+      }
 
-    const fetchMatches = async () => {
-      const { data } = await supabase
+      const now = new Date().toISOString()
+
+      // Upcoming (future only)
+      const { data: upcoming } = await supabase
         .from('matches')
         .select('*')
+        .gte('date', now)
         .order('date', { ascending: true })
 
-      if (data) setMatches(data)
+      // Past
+      const { data: past } = await supabase
+        .from('matches')
+        .select('*')
+        .lt('date', now)
+        .order('date', { ascending: false })
+
+      if (upcoming) setUpcomingMatches(upcoming)
+      if (past) setPastMatches(past)
     }
 
-    checkUser()
-    fetchMatches()
+    init()
   }, [router])
 
   const handlePick = async (matchId: string, team: string) => {
@@ -54,6 +67,54 @@ export default function PicksPage() {
     }
   }
 
+  const renderMatchCard = (match: any, isLocked: boolean) => (
+    <div
+      key={match.id}
+      className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
+    >
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <p className="text-lg font-semibold">
+            {match.home_team}
+          </p>
+          <p className="text-xs text-zinc-500">Home</p>
+        </div>
+
+        <span className="text-zinc-600 text-xs">VS</span>
+
+        <div className="text-right">
+          <p className="text-lg font-semibold">
+            {match.away_team}
+          </p>
+          <p className="text-xs text-zinc-500">Away</p>
+        </div>
+      </div>
+
+      {isLocked && (
+        <p className="text-xs text-red-400 mb-4">
+          Locked
+        </p>
+      )}
+
+      <div className="grid grid-cols-3 gap-3">
+        {['home', 'draw', 'away'].map((team) => (
+          <button
+            key={team}
+            disabled={isLocked || loadingMatchId === match.id}
+            onClick={() => handlePick(match.id, team)}
+            className={`py-2 rounded-2xl text-sm font-medium transition ${
+              isLocked
+                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
+            }`}
+          >
+            {team.charAt(0).toUpperCase() + team.slice(1)}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-black text-white px-5 pt-14 pb-32">
       <h1 className="text-3xl font-semibold tracking-tight mb-10">
@@ -70,65 +131,38 @@ export default function PicksPage() {
         </motion.div>
       )}
 
-      <div className="space-y-8">
-        {matches.map((match) => {
-          const isLocked =
-            new Date(match.date) <= new Date()
+      {/* Upcoming Section */}
+      <div className="space-y-6 mb-12">
+        <h2 className="text-lg font-semibold text-green-400">
+          Upcoming
+        </h2>
 
-          return (
-            <div
-              key={match.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <p className="text-lg font-semibold">
-                    {match.home_team}
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    Home
-                  </p>
-                </div>
-
-                <span className="text-zinc-600 text-xs">
-                  VS
-                </span>
-
-                <div className="text-right">
-                  <p className="text-lg font-semibold">
-                    {match.away_team}
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    Away
-                  </p>
-                </div>
-              </div>
-
-              {isLocked && (
-                <p className="text-xs text-red-400 mb-4">
-                  Locked
-                </p>
-              )}
-
-              <div className="grid grid-cols-3 gap-3">
-                {['home', 'draw', 'away'].map((team) => (
-                  <button
-                    key={team}
-                    disabled={isLocked || loadingMatchId === match.id}
-                    onClick={() => handlePick(match.id, team)}
-                    className={`py-2 rounded-2xl text-sm font-medium transition ${
-                      isLocked
-                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                        : 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
-                    }`}
-                  >
-                    {team.charAt(0).toUpperCase() + team.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {upcomingMatches.length === 0 ? (
+          <p className="text-zinc-500 text-sm">
+            No upcoming matches.
+          </p>
+        ) : (
+          upcomingMatches.map((match) =>
+            renderMatchCard(match, false)
           )
-        })}
+        )}
+      </div>
+
+      {/* Past Section */}
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold text-zinc-500">
+          Past Matches
+        </h2>
+
+        {pastMatches.length === 0 ? (
+          <p className="text-zinc-500 text-sm">
+            No past matches.
+          </p>
+        ) : (
+          pastMatches.map((match) =>
+            renderMatchCard(match, true)
+          )
+        )}
       </div>
 
       <BottomNav />
