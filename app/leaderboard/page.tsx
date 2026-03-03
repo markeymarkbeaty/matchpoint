@@ -4,8 +4,16 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import BottomNav from '../../components/BottomNav'
 
+type Leader = {
+  user_id: string
+  username: string
+  total_units: number
+  wins: number
+  losses: number
+}
+
 export default function LeaderboardPage() {
-  const [leaders, setLeaders] = useState<any[]>([])
+  const [leaders, setLeaders] = useState<Leader[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -31,26 +39,38 @@ export default function LeaderboardPage() {
 
       {!loading && leaders.length === 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-zinc-400">
-          No scored picks yet.
+          No players yet.
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {leaders.map((leader, index) => {
+          const units = Number(leader.total_units || 0)
+
           const unitsColor =
-            leader.units > 0
+            units > 0
               ? 'text-green-400'
-              : leader.units < 0
+              : units < 0
               ? 'text-red-400'
               : 'text-white'
 
+          const totalBets = leader.wins + leader.losses
+          const winRate =
+            totalBets > 0 ? Math.round((leader.wins / totalBets) * 100) : 0
+
+          const isFirst = index === 0
+
           return (
             <motion.div
-              key={leader.username}
+              key={leader.user_id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
+              className={`bg-zinc-900 border rounded-3xl p-6 ${
+                isFirst
+                  ? 'border-yellow-500/50'
+                  : 'border-zinc-800'
+              }`}
             >
               <div className="flex justify-between items-center">
                 <div>
@@ -64,13 +84,16 @@ export default function LeaderboardPage() {
 
                 <div className="text-right">
                   <p className={`text-xl font-semibold ${unitsColor}`}>
-                    {Number(leader.units).toFixed(1)}
+                    {units > 0 ? '+' : ''}
+                    {units.toFixed(1)}
                   </p>
+
                   <p className="text-xs text-zinc-500 mt-1">
-                    {leader.bets} Bets
+                    {totalBets} Bets
                   </p>
+
                   <p className="text-xs text-zinc-500">
-                    {(leader.win_rate * 100).toFixed(0)}% Win Rate
+                    {winRate}% Win Rate
                   </p>
                 </div>
               </div>
