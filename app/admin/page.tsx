@@ -42,13 +42,43 @@ export default function PicksPage() {
     init()
   }, [router])
 
+  const getOrdinal = (n: number) => {
+    if (n > 3 && n < 21) return 'th'
+    switch (n % 10) {
+      case 1: return 'st'
+      case 2: return 'nd'
+      case 3: return 'rd'
+      default: return 'th'
+    }
+  }
+
+  const formatMatchDate = (dateString: string) => {
+    const date = new Date(dateString)
+
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
+    const month = date.toLocaleDateString('en-US', { month: 'long' })
+    const day = date.getDate()
+    const hours = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })
+
+    return `${weekday}, ${month} ${day}${getOrdinal(day)}, ${hours}`
+  }
+
   const handlePick = async (matchId: string, team: string) => {
     setErrorMessage(null)
     setLoadingMatchId(matchId)
 
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
-    if (!user) return
+
+    if (!user) {
+      setErrorMessage('Not authenticated')
+      setLoadingMatchId(null)
+      return
+    }
 
     const { error } = await supabase
       .from('picks')
@@ -66,6 +96,7 @@ export default function PicksPage() {
     setLoadingMatchId(null)
 
     if (error) {
+      console.error(error)
       setErrorMessage(error.message)
     }
   }
@@ -73,52 +104,58 @@ export default function PicksPage() {
   const renderMatchCard = (match: any, isLocked: boolean) => (
     <div
       key={match.id}
-      className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
+      className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden"
     >
-      {/* Match Date */}
-      <p className="text-xs text-zinc-500 mb-4">
-        {new Date(match.date).toLocaleString()}
-      </p>
-
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <p className="text-lg font-semibold">
-            {match.home_team}
-          </p>
-          <p className="text-xs text-zinc-500">Home</p>
-        </div>
-
-        <span className="text-zinc-600 text-xs">VS</span>
-
-        <div className="text-right">
-          <p className="text-lg font-semibold">
-            {match.away_team}
-          </p>
-          <p className="text-xs text-zinc-500">Away</p>
-        </div>
+      {/* SPORTS STYLE DATE HEADER */}
+      <div className="bg-zinc-800 px-6 py-4 border-b border-zinc-700">
+        <p className="text-lg font-bold tracking-tight">
+          {formatMatchDate(match.date)}
+        </p>
       </div>
 
-      {isLocked && (
-        <p className="text-xs text-red-400 mb-4">
-          Locked
-        </p>
-      )}
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <p className="text-xl font-semibold">
+              {match.home_team}
+            </p>
+            <p className="text-xs text-zinc-500">Home</p>
+          </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        {['home', 'draw', 'away'].map((team) => (
-          <button
-            key={team}
-            disabled={isLocked || loadingMatchId === match.id}
-            onClick={() => handlePick(match.id, team)}
-            className={`py-2 rounded-2xl text-sm font-medium transition ${
-              isLocked
-                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                : 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
-            }`}
-          >
-            {team.charAt(0).toUpperCase() + team.slice(1)}
-          </button>
-        ))}
+          <span className="text-zinc-600 text-sm font-semibold">
+            VS
+          </span>
+
+          <div className="text-right">
+            <p className="text-xl font-semibold">
+              {match.away_team}
+            </p>
+            <p className="text-xs text-zinc-500">Away</p>
+          </div>
+        </div>
+
+        {isLocked && (
+          <p className="text-xs text-red-400 mb-4">
+            Locked
+          </p>
+        )}
+
+        <div className="grid grid-cols-3 gap-3">
+          {['home', 'draw', 'away'].map((team) => (
+            <button
+              key={team}
+              disabled={isLocked || loadingMatchId === match.id}
+              onClick={() => handlePick(match.id, team)}
+              className={`py-2 rounded-2xl text-sm font-medium transition ${
+                isLocked
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                  : 'bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20'
+              }`}
+            >
+              {team.charAt(0).toUpperCase() + team.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -140,36 +177,24 @@ export default function PicksPage() {
       )}
 
       {/* Upcoming */}
-      <div className="space-y-6 mb-12">
+      <div className="space-y-8 mb-14">
         <h2 className="text-lg font-semibold text-green-400">
           Upcoming
         </h2>
 
-        {upcomingMatches.length === 0 ? (
-          <p className="text-zinc-500 text-sm">
-            No upcoming matches.
-          </p>
-        ) : (
-          upcomingMatches.map((match) =>
-            renderMatchCard(match, false)
-          )
+        {upcomingMatches.map((match) =>
+          renderMatchCard(match, false)
         )}
       </div>
 
       {/* Past */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         <h2 className="text-lg font-semibold text-zinc-500">
           Past Matches
         </h2>
 
-        {pastMatches.length === 0 ? (
-          <p className="text-zinc-500 text-sm">
-            No past matches.
-          </p>
-        ) : (
-          pastMatches.map((match) =>
-            renderMatchCard(match, true)
-          )
+        {pastMatches.map((match) =>
+          renderMatchCard(match, true)
         )}
       </div>
 
