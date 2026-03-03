@@ -23,14 +23,12 @@ export default function PicksPage() {
 
       const now = new Date().toISOString()
 
-      // Upcoming (future only)
       const { data: upcoming } = await supabase
         .from('matches')
         .select('*')
         .gte('date', now)
         .order('date', { ascending: true })
 
-      // Past
       const { data: past } = await supabase
         .from('matches')
         .select('*')
@@ -54,11 +52,16 @@ export default function PicksPage() {
 
     const { error } = await supabase
       .from('picks')
-      .upsert({
-        user_id: user.id,
-        match_id: matchId,
-        selected_team: team
-      })
+      .upsert(
+        {
+          user_id: user.id,
+          match_id: matchId,
+          selected_team: team
+        },
+        {
+          onConflict: 'user_id,match_id'
+        }
+      )
 
     setLoadingMatchId(null)
 
@@ -72,6 +75,11 @@ export default function PicksPage() {
       key={match.id}
       className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6"
     >
+      {/* Match Date */}
+      <p className="text-xs text-zinc-500 mb-4">
+        {new Date(match.date).toLocaleString()}
+      </p>
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-lg font-semibold">
@@ -131,7 +139,7 @@ export default function PicksPage() {
         </motion.div>
       )}
 
-      {/* Upcoming Section */}
+      {/* Upcoming */}
       <div className="space-y-6 mb-12">
         <h2 className="text-lg font-semibold text-green-400">
           Upcoming
@@ -148,7 +156,7 @@ export default function PicksPage() {
         )}
       </div>
 
-      {/* Past Section */}
+      {/* Past */}
       <div className="space-y-6">
         <h2 className="text-lg font-semibold text-zinc-500">
           Past Matches
