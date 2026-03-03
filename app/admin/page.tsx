@@ -10,7 +10,6 @@ export default function PicksPage() {
   const [upcomingMatches, setUpcomingMatches] = useState<any[]>([])
   const [pastMatches, setPastMatches] = useState<any[]>([])
   const [userPicks, setUserPicks] = useState<Record<string, string>>({})
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loadingMatchId, setLoadingMatchId] = useState<string | null>(null)
   const router = useRouter()
 
@@ -57,12 +56,10 @@ export default function PicksPage() {
   }, [router])
 
   const handlePick = async (matchId: string, team: string) => {
-    setErrorMessage(null)
     setLoadingMatchId(matchId)
 
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
-
     if (!user) return
 
     const { error } = await supabase
@@ -81,8 +78,6 @@ export default function PicksPage() {
         ...prev,
         [matchId]: team
       }))
-    } else {
-      setErrorMessage(error.message)
     }
 
     setLoadingMatchId(null)
@@ -120,7 +115,7 @@ export default function PicksPage() {
         className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden"
       >
         <div className="bg-zinc-800 px-6 py-4 border-b border-zinc-700">
-          <p className="text-lg font-bold">
+          <p className="text-lg font-semibold tracking-tight">
             {formatMatchDate(match.date)}
           </p>
         </div>
@@ -128,27 +123,37 @@ export default function PicksPage() {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <p className="text-xl font-semibold">{match.home_team}</p>
-            <span className="text-zinc-500">VS</span>
+            <span className="text-zinc-500 text-sm">VS</span>
             <p className="text-xl font-semibold">{match.away_team}</p>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            {['home', 'draw', 'away'].map((team) => (
-              <button
-                key={team}
-                disabled={isLocked || loadingMatchId === match.id}
-                onClick={() => handlePick(match.id, team)}
-                className={`py-2 rounded-2xl text-sm font-medium transition ${
-                  selected === team
-                    ? 'bg-green-500 text-black'
-                    : isLocked
-                    ? 'bg-zinc-800 text-zinc-500'
-                    : 'bg-green-500/10 border border-green-500/30 text-green-400'
-                }`}
-              >
-                {team}
-              </button>
-            ))}
+            {['home', 'draw', 'away'].map((team) => {
+              const isSelected = selected === team
+
+              return (
+                <button
+                  key={team}
+                  disabled={isLocked || loadingMatchId === match.id}
+                  onClick={() => handlePick(match.id, team)}
+                  className={`relative py-2 rounded-2xl text-sm font-medium transition-all duration-200 ${
+                    isSelected
+                      ? 'bg-green-500/10 border border-green-400 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.5)]'
+                      : isLocked
+                      ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                      : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:border-green-500/50 hover:text-green-400'
+                  }`}
+                >
+                  {team}
+
+                  {isSelected && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
