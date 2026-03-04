@@ -8,7 +8,6 @@ export default function HomePage() {
     <main className="min-h-screen bg-black text-zinc-100 px-6 py-16">
       <div className="max-w-4xl mx-auto">
 
-        {/* Hero */}
         <section className="text-center mb-20">
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
@@ -20,8 +19,8 @@ export default function HomePage() {
           </motion.h1>
 
           <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-            MatchPoint is a competitive NWSL prediction platform where you and your friends
-            pick match outcomes, track performance, and compete for bragging rights.
+            MatchPoint is a competitive NWSL prediction platform where you and
+            your friends pick match outcomes and track performance all season.
           </p>
 
           <div className="flex justify-center gap-4">
@@ -41,31 +40,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works */}
         <section className="grid md:grid-cols-3 gap-8 mb-20">
           <Feature
             title="Make Your Picks"
-            description="Choose home, draw, or away before kickoff. Picks lock automatically at match start."
+            description="Choose home, draw, or away before kickoff."
           />
           <Feature
-            title="Track Performance"
-            description="Wins, units, and leaderboard rankings update automatically after results."
+            title="Track Results"
+            description="Automatic scoring updates standings."
           />
           <Feature
             title="Compete With Friends"
-            description="Climb the leaderboard and see who actually knows the NWSL."
+            description="See who actually knows the league."
           />
         </section>
 
-        {/* Future Section */}
+        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20">
+          <h2 className="text-2xl font-semibold mb-4 text-green-400">
+            Invite Your Friends
+          </h2>
+          <p className="text-zinc-400 mb-4">
+            The more players, the better the competition.
+          </p>
+          <p className="text-zinc-500 text-sm break-all">
+            https://matchpoint-ivory-pi.vercel.app
+          </p>
+        </section>
+
         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
           <h2 className="text-2xl font-semibold mb-4 text-green-400">
             Coming Soon: Bet Against Yourself
           </h2>
           <p className="text-zinc-400 leading-relaxed">
-            An optional behavioral finance layer where you commit savings toward your picks.
-            If you win, funds are invested. If you lose, your principal is returned.
-            No gambling. Just smarter habits.
+            An optional savings layer where wins invest funds and losses return
+            principal. No gambling. Just better habits.
           </p>
         </section>
 
