@@ -52,11 +52,13 @@ export async function POST(request: Request) {
     )
 
     const mapped = fixtures.map((f: any) => ({
-      external_id: f.fixture.id,
-      date: f.fixture.date,
-      home_team: f.teams.home.name,
-      away_team: f.teams.away.name,
-    }))
+  external_id: f.fixture.id,
+  date: f.fixture.date,
+  home_team: f.teams.home.name,
+  away_team: f.teams.away.name,
+  home_logo: f.teams.home.logo,
+  away_logo: f.teams.away.logo,
+}))
 
     const { error } = await supabase
       .from('matches')
