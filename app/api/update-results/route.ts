@@ -22,6 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing API key' }, { status: 500 })
     }
 
+    // Look back 14 days for completed matches
     const past = new Date()
     past.setDate(past.getDate() - 14)
 
@@ -49,7 +50,10 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
+    let updated = 0
+
     for (const f of fixtures) {
+      const fixtureId = f.fixture.id
       const homeGoals = f.goals.home
       const awayGoals = f.goals.away
 
@@ -61,15 +65,26 @@ export async function POST(request: Request) {
         else result = 'draw'
       }
 
-      await supabase
+      // Only update rows where result is currently null
+      const { data: existing } = await supabase
         .from('matches')
-        .update({ result })
-        .eq('external_id', f.fixture.id)
+        .select('result')
+        .eq('external_id', fixtureId)
+        .single()
+
+      if (existing && existing.result === null) {
+        await supabase
+          .from('matches')
+          .update({ result })
+          .eq('external_id', fixtureId)
+
+        updated++
+      }
     }
 
     return NextResponse.json({
       success: true,
-      updated: fixtures.length,
+      updated,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
