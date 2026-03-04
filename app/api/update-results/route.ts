@@ -1,62 +1,77 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export async function GET(request: Request) {
-  const secret = new URL(request.url).searchParams.get('secret')
+const API_URL = 'https://v3.football.api-sports.io'
+const LEAGUE_ID = 254
+const SEASON = 2026
 
-  if (secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+function formatDate(date: Date) {
+  return date.toISOString().split('T')[0]
+}
 
+export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization')
+
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const apiKey = process.env.API_SPORTS_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Missing API key' }, { status: 500 })
+    }
+
+    const past = new Date()
+    past.setDate(past.getDate() - 14)
+
+    const from = formatDate(past)
 
     const response = await fetch(
-      'https://v3.football.api-sports.io/fixtures?league=254&season=2024',
+      `${API_URL}/fixtures?league=${LEAGUE_ID}&season=${SEASON}&from=${from}&status=FT`,
       {
         headers: {
-          'x-apisports-key': apiKey!,
+          'x-apisports-key': apiKey,
         },
       }
     )
 
-    const data = await response.json()
-
-    if (!data.response) {
-      return NextResponse.json({ error: data.errors || 'API failed' })
+    if (!response.ok) {
+      const text = await response.text()
+      return NextResponse.json({ error: text }, { status: 500 })
     }
+
+    const json = await response.json()
+    const fixtures = json.response || []
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    let updated = 0
+    for (const f of fixtures) {
+      const homeGoals = f.goals.home
+      const awayGoals = f.goals.away
 
-    for (const fixture of data.response) {
-      if (fixture.fixture.status.short === 'FT') {
-        const matchId = fixture.fixture.id
-        const finalScore = `${fixture.goals.home}-${fixture.goals.away}`
+      let result: 'home' | 'away' | 'draw' | null = null
 
-        const { error } = await supabase
-          .from('matches')
-          .update({ result: finalScore })
-          .eq('external_id', matchId)
-
-        if (!error) {
-          updated++
-        } else {
-          console.log('Update error:', error)
-        }
+      if (homeGoals !== null && awayGoals !== null) {
+        if (homeGoals > awayGoals) result = 'home'
+        else if (awayGoals > homeGoals) result = 'away'
+        else result = 'draw'
       }
+
+      await supabase
+        .from('matches')
+        .update({ result })
+        .eq('external_id', f.fixture.id)
     }
 
     return NextResponse.json({
       success: true,
-      updated,
+      updated: fixtures.length,
     })
-  } catch (err) {
-    console.error('Fatal error:', err)
-    return NextResponse.json({ error: 'Server crashed' })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

@@ -5,6 +5,10 @@ const API_URL = 'https://v3.football.api-sports.io'
 const LEAGUE_ID = 254
 const SEASON = 2026
 
+function formatDate(date: Date) {
+  return date.toISOString().split('T')[0]
+}
+
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -14,13 +18,19 @@ export async function POST(request: Request) {
     }
 
     const apiKey = process.env.API_SPORTS_KEY
-
     if (!apiKey) {
       return NextResponse.json({ error: 'Missing API key' }, { status: 500 })
     }
 
+    const today = new Date()
+    const future = new Date()
+    future.setDate(today.getDate() + 90)
+
+    const from = formatDate(today)
+    const to = formatDate(future)
+
     const response = await fetch(
-      `${API_URL}/fixtures?league=${LEAGUE_ID}&season=${SEASON}`,
+      `${API_URL}/fixtures?league=${LEAGUE_ID}&season=${SEASON}&from=${from}&to=${to}`,
       {
         headers: {
           'x-apisports-key': apiKey,
@@ -41,31 +51,12 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const mapped = fixtures.map((f: any) => {
-      const fixtureId = f.fixture.id
-      const date = f.fixture.date
-      const home = f.teams.home.name
-      const away = f.teams.away.name
-      const status = f.fixture.status.short
-      const homeGoals = f.goals.home
-      const awayGoals = f.goals.away
-
-      let result: 'home' | 'away' | 'draw' | null = null
-
-      if (status === 'FT' && homeGoals !== null && awayGoals !== null) {
-        if (homeGoals > awayGoals) result = 'home'
-        else if (awayGoals > homeGoals) result = 'away'
-        else result = 'draw'
-      }
-
-      return {
-        external_id: fixtureId,
-        date,
-        home_team: home,
-        away_team: away,
-        result,
-      }
-    })
+    const mapped = fixtures.map((f: any) => ({
+      external_id: f.fixture.id,
+      date: f.fixture.date,
+      home_team: f.teams.home.name,
+      away_team: f.teams.away.name,
+    }))
 
     const { error } = await supabase
       .from('matches')
@@ -78,9 +69,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       synced: mapped.length,
+      from,
+      to,
     })
   } catch (err: any) {
-    console.error(err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
