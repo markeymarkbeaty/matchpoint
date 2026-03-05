@@ -1,14 +1,33 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
-import BottomNav from '../../components/BottomNav'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import BottomNav from '@/components/BottomNav'
 
 export default function LeaguesPage() {
-  const [leagueName, setLeagueName] = useState('')
-  const [leagues, setLeagues] = useState<any[]>([])
 
-  const createLeague = async () => {
+  const router = useRouter()
+
+  const [leagues, setLeagues] = useState<any[]>([])
+  const [leagueName, setLeagueName] = useState('')
+
+  useEffect(() => {
+    loadLeagues()
+  }, [])
+
+  async function loadLeagues() {
+
+    const { data } = await supabase
+      .from('leagues')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (data) setLeagues(data)
+  }
+
+  async function createLeague() {
+
     const { data } = await supabase.auth.getUser()
     const user = data.user
 
@@ -24,35 +43,26 @@ export default function LeaguesPage() {
       .single()
 
     if (league) {
+
       await supabase.from('league_members').insert({
         league_id: league.id,
         user_id: user.id
       })
+
+      setLeagueName('')
+      loadLeagues()
     }
-
-    setLeagueName('')
-    loadLeagues()
   }
-
-  const loadLeagues = async () => {
-    const { data } = await supabase
-      .from('leagues')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (data) setLeagues(data)
-  }
-
-  useEffect(() => {
-    loadLeagues()
-  }, [])
 
   return (
+
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
       <h1 className="text-3xl font-semibold mb-8">
         Leagues
       </h1>
+
+      {/* CREATE LEAGUE */}
 
       <div className="mb-10">
 
@@ -72,15 +82,20 @@ export default function LeaguesPage() {
 
       </div>
 
+      {/* LEAGUE LIST */}
+
       <div className="space-y-4">
 
         {leagues.map((league) => (
+
           <div
             key={league.id}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+            onClick={() => router.push(`/leagues/${league.id}`)}
+            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-green-500 transition"
           >
             {league.name}
           </div>
+
         ))}
 
       </div>
@@ -88,5 +103,6 @@ export default function LeaguesPage() {
       <BottomNav />
 
     </div>
+
   )
 }
