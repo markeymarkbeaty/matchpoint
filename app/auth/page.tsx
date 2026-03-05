@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function AuthPage() {
+
   const router = useRouter()
 
   const [isSignup, setIsSignup] = useState(true)
@@ -16,6 +17,7 @@ export default function AuthPage() {
   const [message, setMessage] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
+
     e.preventDefault()
 
     setLoading(true)
@@ -25,6 +27,20 @@ export default function AuthPage() {
     try {
 
       if (isSignup) {
+
+        // Check if username already exists
+
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username)
+          .single()
+
+        if (existingUser) {
+          throw new Error('Username already taken')
+        }
+
+        // Create auth user
 
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -36,11 +52,18 @@ export default function AuthPage() {
 
         if (error) throw error
 
+        // Insert profile
+
         if (data.user) {
-          await supabase.from('profiles').insert({
-            id: data.user.id,
-            username
-          })
+
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              username
+            })
+
+          if (profileError) throw profileError
         }
 
         setMessage(
@@ -58,7 +81,6 @@ export default function AuthPage() {
 
         router.push('/home')
         router.refresh()
-
       }
 
     } catch (err: any) {
@@ -71,6 +93,7 @@ export default function AuthPage() {
   }
 
   return (
+
     <main className="min-h-screen bg-black text-zinc-100 flex items-center justify-center px-6">
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-md">
@@ -148,5 +171,6 @@ export default function AuthPage() {
       </div>
 
     </main>
+
   )
 }
