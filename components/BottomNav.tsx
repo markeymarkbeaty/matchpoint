@@ -10,15 +10,13 @@ export default function BottomNav() {
     { href: '/home', label: 'Home' },
     { href: '/picks', label: 'Picks' },
     { href: '/results', label: 'Results' },
-    { href: '/leagues', label: 'Leagues' },
-    { href: '/leaderboard', label: 'Leaderboard' },
-    { href: '/dashboard', label: 'Dashboard' }
+    { href: '/leaderboard', label: 'Leaderboard' }
   ]
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800">
 
-      <div className="max-w-xl mx-auto grid grid-cols-6">
+      <div className="max-w-xl mx-auto grid grid-cols-4">
 
         {navItems.map((item) => {
           const active = pathname === item.href
