@@ -142,13 +142,48 @@ export default function PicksPage() {
         </div>
 
         <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <p className="text-xl font-semibold">{match.home_team}</p>
 
-            <span className="text-zinc-500 text-sm">VS</span>
+          {/* Teams Row */}
 
-            <p className="text-xl font-semibold">{match.away_team}</p>
+          <div className="grid grid-cols-3 items-center mb-6">
+
+            {/* Home */}
+
+            <div className="flex items-center gap-3">
+              {match.home_logo && (
+                <img
+                  src={match.home_logo}
+                  alt={match.home_team}
+                  className="w-8 h-8 object-contain"
+                />
+              )}
+              <p className="text-lg font-semibold">{match.home_team}</p>
+            </div>
+
+            {/* VS */}
+
+            <div className="text-center text-zinc-500 text-sm">
+              VS
+            </div>
+
+            {/* Away */}
+
+            <div className="flex items-center justify-end gap-3">
+              <p className="text-lg font-semibold text-right">
+                {match.away_team}
+              </p>
+              {match.away_logo && (
+                <img
+                  src={match.away_logo}
+                  alt={match.away_team}
+                  className="w-8 h-8 object-contain"
+                />
+              )}
+            </div>
+
           </div>
+
+          {/* Pick Buttons */}
 
           <div className="grid grid-cols-3 gap-3">
             {['home', 'draw', 'away'].map((team) => {
