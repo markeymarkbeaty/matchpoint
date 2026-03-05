@@ -28,19 +28,17 @@ export default function AuthPage() {
 
       if (isSignup) {
 
-        // Check if username already exists
+        const normalizedUsername = username.toLowerCase()
 
         const { data: existingUser } = await supabase
           .from('profiles')
           .select('username')
-          .eq('username', username)
+          .ilike('username', normalizedUsername)
           .single()
 
         if (existingUser) {
           throw new Error('Username already taken')
         }
-
-        // Create auth user
 
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -52,15 +50,13 @@ export default function AuthPage() {
 
         if (error) throw error
 
-        // Insert profile
-
         if (data.user) {
 
           const { error: profileError } = await supabase
             .from('profiles')
             .insert({
               id: data.user.id,
-              username
+              username: normalizedUsername
             })
 
           if (profileError) throw profileError
@@ -171,6 +167,5 @@ export default function AuthPage() {
       </div>
 
     </main>
-
   )
 }
