@@ -7,28 +7,30 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { name: 'Picks', href: '/picks' },
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Leaderboard', href: '/leaderboard' }
+    { href: '/', label: 'Home' },
+    { href: '/picks', label: 'Picks' },
+    { href: '/results', label: 'Results' },
+    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/dashboard', label: 'Dashboard' }
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-6 py-4">
-      <div className="flex justify-between max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800">
+      <div className="max-w-xl mx-auto flex justify-around py-3">
         {navItems.map((item) => {
           const active = pathname === item.href
 
           return (
             <Link
-              key={item.name}
+              key={item.href}
               href={item.href}
-              className={`text-sm font-medium transition ${
+              className={`text-sm font-medium transition-colors ${
                 active
                   ? 'text-green-400'
                   : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              {item.name}
+              {item.label}
             </Link>
           )
         })}
