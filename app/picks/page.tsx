@@ -1,244 +1,186 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import BottomNav from '../../components/BottomNav'
+import BottomNav from '@/components/BottomNav'
 
 export default function PicksPage() {
-  const [upcomingMatches, setUpcomingMatches] = useState<any[]>([])
-  const [pastMatches, setPastMatches] = useState<any[]>([])
-  const [userPicks, setUserPicks] = useState<Record<string, string>>({})
-  const [loadingMatchId, setLoadingMatchId] = useState<string | null>(null)
 
   const router = useRouter()
 
+  const [matches, setMatches] = useState<any[]>([])
+  const [picks, setPicks] = useState<any>({})
+
   useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getUser()
-      const user = data.user
+    loadMatches()
+    loadPicks()
+  }, [])
 
-      if (!user) {
-        router.push('/auth')
-        return
-      }
+  async function loadMatches() {
 
-      const now = new Date().toISOString()
+    const { data } = await supabase
+      .from('matches')
+      .select('*')
+      .order('date', { ascending: true })
 
-      const { data: upcoming } = await supabase
-        .from('matches')
-        .select('*')
-        .gte('date', now)
-        .order('date', { ascending: true })
+    if (data) setMatches(data)
+  }
 
-      const { data: past } = await supabase
-        .from('matches')
-        .select('*')
-        .lt('date', now)
-        .order('date', { ascending: false })
-
-      const { data: picks } = await supabase
-        .from('picks')
-        .select('match_id, selected_team')
-        .eq('user_id', user.id)
-
-      const picksMap: Record<string, string> = {}
-
-      picks?.forEach((p) => {
-        picksMap[p.match_id] = p.selected_team
-      })
-
-      if (upcoming) setUpcomingMatches(upcoming)
-      if (past) setPastMatches(past)
-      setUserPicks(picksMap)
-    }
-
-    init()
-  }, [router])
-
-  const handlePick = async (matchId: string, team: string) => {
-    setLoadingMatchId(matchId)
+  async function loadPicks() {
 
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
 
     if (!user) return
 
-    const { error } = await supabase
+    const { data } = await supabase
       .from('picks')
-      .upsert(
-        {
-          user_id: user.id,
-          match_id: matchId,
-          selected_team: team
-        },
-        { onConflict: 'user_id,match_id' }
-      )
+      .select('*')
+      .eq('user_id', user.id)
 
-    if (!error) {
-      setUserPicks((prev) => ({
-        ...prev,
-        [matchId]: team
-      }))
-    }
+    const map: any = {}
 
-    setLoadingMatchId(null)
-  }
-
-  const getOrdinal = (n: number) => {
-    if (n > 3 && n < 21) return 'th'
-
-    switch (n % 10) {
-      case 1:
-        return 'st'
-      case 2:
-        return 'nd'
-      case 3:
-        return 'rd'
-      default:
-        return 'th'
-    }
-  }
-
-  const formatMatchDate = (dateString: string) => {
-    const date = new Date(dateString)
-
-    const weekday = date.toLocaleDateString('en-US', {
-      weekday: 'long'
+    data?.forEach((p) => {
+      map[p.match_id] = p.selected_team
     })
 
-    const month = date.toLocaleDateString('en-US', {
-      month: 'long'
-    })
-
-    const day = date.getDate()
-
-    const hours = date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    })
-
-    return `${weekday}, ${month} ${day}${getOrdinal(day)}, ${hours}`
+    setPicks(map)
   }
 
-  const renderMatchCard = (match: any) => {
-    const selected = userPicks[match.id]
+  async function makePick(matchId: string, team: string) {
 
-    const kickoff = new Date(match.date)
-    const now = new Date()
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
 
-    const isLocked = now >= kickoff
+    if (!user) return
 
-    return (
-      <div
-        key={match.id}
-        className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden"
-      >
-        <div className="bg-zinc-800 px-6 py-4 border-b border-zinc-700">
-          <p className="text-base italic font-medium text-zinc-300 tracking-tight">
-            {formatMatchDate(match.date)}
-          </p>
-        </div>
+    await supabase
+      .from('picks')
+      .upsert({
+        user_id: user.id,
+        match_id: matchId,
+        selected_team: team
+      })
 
-        <div className="p-6">
-
-          {/* Teams Row */}
-
-          <div className="grid grid-cols-3 items-center mb-6">
-
-            {/* Home */}
-
-            <div className="flex items-center gap-3">
-              {match.home_logo && (
-                <img
-                  src={match.home_logo}
-                  alt={match.home_team}
-                  className="w-8 h-8 object-contain"
-                />
-              )}
-              <p className="text-lg font-semibold">{match.home_team}</p>
-            </div>
-
-            {/* VS */}
-
-            <div className="text-center text-zinc-500 text-sm">
-              VS
-            </div>
-
-            {/* Away */}
-
-            <div className="flex items-center justify-end gap-3">
-              <p className="text-lg font-semibold text-right">
-                {match.away_team}
-              </p>
-              {match.away_logo && (
-                <img
-                  src={match.away_logo}
-                  alt={match.away_team}
-                  className="w-8 h-8 object-contain"
-                />
-              )}
-            </div>
-
-          </div>
-
-          {/* Pick Buttons */}
-
-          <div className="grid grid-cols-3 gap-3">
-            {['home', 'draw', 'away'].map((team) => {
-              const isSelected = selected === team
-
-              return (
-                <button
-                  key={team}
-                  disabled={isLocked || loadingMatchId === match.id}
-                  onClick={() => handlePick(match.id, team)}
-                  className={`relative py-2 rounded-2xl text-sm font-medium transition-all duration-200 ${
-                    isSelected
-                      ? 'bg-green-500/10 border border-green-400 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.5)]'
-                      : isLocked
-                      ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                      : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:border-green-500/50 hover:text-green-400'
-                  }`}
-                >
-                  {team}
-
-                  {isSelected && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400">
-                      ✓
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    )
+    setPicks({
+      ...picks,
+      [matchId]: team
+    })
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-5 pt-14 pb-32">
-      <h1 className="text-3xl font-semibold mb-10">Picks</h1>
 
-      <div className="space-y-8 mb-14">
-        <h2 className="text-lg font-semibold text-green-400">
-          Upcoming
-        </h2>
+    <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-        {upcomingMatches.map((match) => renderMatchCard(match))}
-      </div>
+      <h1 className="text-3xl font-semibold mb-8">
+        Picks
+      </h1>
 
-      <div className="space-y-8">
-        <h2 className="text-lg font-semibold text-zinc-500">
-          Past Matches
-        </h2>
+      <div className="space-y-6">
 
-        {pastMatches.map((match) => renderMatchCard(match))}
+        {matches.map((match) => (
+
+          <div
+            key={match.id}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
+          >
+
+            {/* TEAM ROW */}
+
+            <div className="grid grid-cols-3 items-center mb-6">
+
+              {/* HOME */}
+
+              <div className="flex items-center gap-3">
+
+                {match.home_logo && (
+                  <img
+                    src={match.home_logo}
+                    alt={match.home_team}
+                    className="w-8 h-8 object-contain"
+                  />
+                )}
+
+                <span className="font-semibold">
+                  {match.home_team}
+                </span>
+
+              </div>
+
+              {/* VS */}
+
+              <div className="text-center text-zinc-500 text-sm">
+                VS
+              </div>
+
+              {/* AWAY */}
+
+              <div className="flex items-center justify-end gap-3">
+
+                <span className="font-semibold">
+                  {match.away_team}
+                </span>
+
+                {match.away_logo && (
+                  <img
+                    src={match.away_logo}
+                    alt={match.away_team}
+                    className="w-8 h-8 object-contain"
+                  />
+                )}
+
+              </div>
+
+            </div>
+
+            {/* PICK BUTTONS */}
+
+            <div className="grid grid-cols-3 gap-3">
+
+              <button
+                onClick={() => makePick(match.id, 'home')}
+                className={`py-2 rounded-xl ${
+                  picks[match.id] === 'home'
+                    ? 'bg-green-500 text-black'
+                    : 'bg-zinc-800'
+                }`}
+              >
+                Home
+              </button>
+
+              <button
+                onClick={() => makePick(match.id, 'draw')}
+                className={`py-2 rounded-xl ${
+                  picks[match.id] === 'draw'
+                    ? 'bg-green-500 text-black'
+                    : 'bg-zinc-800'
+                }`}
+              >
+                Draw
+              </button>
+
+              <button
+                onClick={() => makePick(match.id, 'away')}
+                className={`py-2 rounded-xl ${
+                  picks[match.id] === 'away'
+                    ? 'bg-green-500 text-black'
+                    : 'bg-zinc-800'
+                }`}
+              >
+                Away
+              </button>
+
+            </div>
+
+          </div>
+
+        ))}
+
       </div>
 
       <BottomNav />
+
     </div>
   )
 }
