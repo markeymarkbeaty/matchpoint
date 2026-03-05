@@ -15,7 +15,7 @@ export async function GET() {
   try {
 
     const res = await fetch(
-      'https://v3.football.api-sports.io/fixtures?league=442&season=2024',
+      'https://v3.football.api-sports.io/fixtures?league=254&season=2026',
       {
         headers: {
           'x-apisports-key': process.env.API_SPORTS_KEY!
