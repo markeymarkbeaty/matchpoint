@@ -27,22 +27,15 @@ export default function DashboardPage() {
         Dashboard
       </h1>
 
-      {/* ACCOUNT */}
+      {/* SPORTS */}
 
       <div className="mb-10">
 
         <h2 className="text-sm uppercase text-zinc-500 mb-4">
-          Account
+          Sports
         </h2>
 
         <div className="space-y-3">
-
-          <button
-            onClick={() => router.push('/friends')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
-          >
-            My Friends
-          </button>
 
           <button
             onClick={() => router.push('/favorite-teams')}
@@ -52,10 +45,24 @@ export default function DashboardPage() {
           </button>
 
           <button
-            onClick={() => router.push('/notifications')}
+            onClick={() => router.push('/standings')}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
           >
-            Notification Settings
+            Standings
+          </button>
+
+          <button
+            onClick={() => router.push('/matches')}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+          >
+            Matches
+          </button>
+
+          <button
+            onClick={() => router.push('/schedule')}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+          >
+            Schedule
           </button>
 
         </div>
@@ -73,24 +80,31 @@ export default function DashboardPage() {
         <div className="space-y-3">
 
           <button
-            onClick={() => router.push('/invite')}
+            onClick={() => router.push('/friends')}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
           >
-            Invite Friends
+            My Friends
           </button>
 
           <button
             onClick={() => router.push('/leagues')}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
           >
-            Your Leagues
+            My Leagues
+          </button>
+
+          <button
+            onClick={() => router.push('/invite')}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+          >
+            Invite Friends
           </button>
 
         </div>
 
       </div>
 
-      {/* FEEDBACK */}
+      {/* BETA */}
 
       <div className="mb-10">
 
@@ -107,7 +121,7 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* FUTURE FEATURE */}
+      {/* FUTURE */}
 
       <div>
 
@@ -119,7 +133,7 @@ export default function DashboardPage() {
           disabled
           className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 text-zinc-500"
         >
-          Investment Settings (Coming Soon)
+          Investing (Coming Soon)
         </button>
 
       </div>

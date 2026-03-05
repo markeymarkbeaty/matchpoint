@@ -23,35 +23,31 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold mb-6">
-        MatchPoint
+      <h1 className="text-3xl font-semibold mb-10">
+        Account
       </h1>
-
-      <p className="text-zinc-400 mb-10">
-        Welcome back. Ready to make your picks?
-      </p>
 
       <div className="space-y-4">
 
         <button
-          onClick={() => router.push('/picks')}
-          className="w-full bg-green-500 text-black py-3 rounded-xl font-medium"
+          onClick={() => router.push('/username')}
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
         >
-          Make Picks
+          Update Username
         </button>
 
         <button
-          onClick={() => router.push('/leaderboard')}
-          className="w-full bg-zinc-800 py-3 rounded-xl"
+          onClick={() => router.push('/notifications')}
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
         >
-          View Leaderboard
+          Notification Settings
         </button>
 
         <button
-          onClick={() => router.push('/leagues')}
-          className="w-full bg-zinc-800 py-3 rounded-xl"
+          onClick={() => router.push('/reset-password')}
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
         >
-          Your Leagues
+          Reset Password
         </button>
 
       </div>
