@@ -11,9 +11,11 @@ function cleanTeamName(name: string) {
 }
 
 export async function GET() {
+
   try {
+
     const res = await fetch(
-      `https://v3.football.api-sports.io/fixtures?league=106&season=2024`,
+      'https://v3.football.api-sports.io/fixtures?league=442&season=2024',
       {
         headers: {
           'x-apisports-key': process.env.API_SPORTS_KEY!
@@ -22,9 +24,11 @@ export async function GET() {
     )
 
     const data = await res.json()
+
     const fixtures = data.response
 
     for (const match of fixtures) {
+
       await supabase.from('matches').upsert({
         external_id: match.fixture.id,
         date: match.fixture.date,
@@ -33,14 +37,22 @@ export async function GET() {
         home_logo: match.teams.home.logo,
         away_logo: match.teams.away.logo,
         stadium: match.fixture.venue?.name,
-        city: match.fixture.venue?.city,
-        state: null
+        city: match.fixture.venue?.city
       })
+
     }
 
     return NextResponse.json({ success: true })
+
   } catch (error) {
+
     console.error(error)
-    return NextResponse.json({ error: 'Sync failed' }, { status: 500 })
+
+    return NextResponse.json(
+      { error: 'Fixture sync failed' },
+      { status: 500 }
+    )
+
   }
+
 }
