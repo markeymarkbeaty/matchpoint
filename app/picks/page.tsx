@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import BottomNav from '../../components/BottomNav'
 
 export default function PicksPage() {
@@ -11,6 +10,7 @@ export default function PicksPage() {
   const [pastMatches, setPastMatches] = useState<any[]>([])
   const [userPicks, setUserPicks] = useState<Record<string, string>>({})
   const [loadingMatchId, setLoadingMatchId] = useState<string | null>(null)
+
   const router = useRouter()
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function PicksPage() {
       const user = data.user
 
       if (!user) {
-        router.push('/login')
+        router.push('/auth')
         return
       }
 
@@ -43,6 +43,7 @@ export default function PicksPage() {
         .eq('user_id', user.id)
 
       const picksMap: Record<string, string> = {}
+
       picks?.forEach((p) => {
         picksMap[p.match_id] = p.selected_team
       })
@@ -60,6 +61,7 @@ export default function PicksPage() {
 
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
+
     if (!user) return
 
     const { error } = await supabase
@@ -85,29 +87,48 @@ export default function PicksPage() {
 
   const getOrdinal = (n: number) => {
     if (n > 3 && n < 21) return 'th'
+
     switch (n % 10) {
-      case 1: return 'st'
-      case 2: return 'nd'
-      case 3: return 'rd'
-      default: return 'th'
+      case 1:
+        return 'st'
+      case 2:
+        return 'nd'
+      case 3:
+        return 'rd'
+      default:
+        return 'th'
     }
   }
 
   const formatMatchDate = (dateString: string) => {
     const date = new Date(dateString)
-    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
-    const month = date.toLocaleDateString('en-US', { month: 'long' })
+
+    const weekday = date.toLocaleDateString('en-US', {
+      weekday: 'long'
+    })
+
+    const month = date.toLocaleDateString('en-US', {
+      month: 'long'
+    })
+
     const day = date.getDate()
+
     const hours = date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       timeZoneName: 'short'
     })
+
     return `${weekday}, ${month} ${day}${getOrdinal(day)}, ${hours}`
   }
 
-  const renderMatchCard = (match: any, isLocked: boolean) => {
+  const renderMatchCard = (match: any) => {
     const selected = userPicks[match.id]
+
+    const kickoff = new Date(match.date)
+    const now = new Date()
+
+    const isLocked = now >= kickoff
 
     return (
       <div
@@ -123,7 +144,9 @@ export default function PicksPage() {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <p className="text-xl font-semibold">{match.home_team}</p>
+
             <span className="text-zinc-500 text-sm">VS</span>
+
             <p className="text-xl font-semibold">{match.away_team}</p>
           </div>
 
@@ -165,19 +188,19 @@ export default function PicksPage() {
       <h1 className="text-3xl font-semibold mb-10">Picks</h1>
 
       <div className="space-y-8 mb-14">
-        <h2 className="text-lg font-semibold text-green-400">Upcoming</h2>
-        {upcomingMatches.map((match) =>
-          renderMatchCard(match, false)
-        )}
+        <h2 className="text-lg font-semibold text-green-400">
+          Upcoming
+        </h2>
+
+        {upcomingMatches.map((match) => renderMatchCard(match))}
       </div>
 
       <div className="space-y-8">
         <h2 className="text-lg font-semibold text-zinc-500">
           Past Matches
         </h2>
-        {pastMatches.map((match) =>
-          renderMatchCard(match, true)
-        )}
+
+        {pastMatches.map((match) => renderMatchCard(match))}
       </div>
 
       <BottomNav />
