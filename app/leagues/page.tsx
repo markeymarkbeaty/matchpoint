@@ -25,20 +25,28 @@ export default function LeaguesPage() {
 
     if (!user) return
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('league_members')
       .select(`
         league_id,
-        leagues(*)
+        leagues (
+          id,
+          name,
+          archived
+        )
       `)
       .eq('user_id', user.id)
 
-    if (data) {
-
-      const leagueList = data.map((l: any) => l.leagues)
-
-      setLeagues(leagueList)
+    if (error || !data) {
+      setLeagues([])
+      return
     }
+
+    const filtered = data
+      .map((l: any) => l.leagues)
+      .filter((league: any) => league && league.archived === false)
+
+    setLeagues(filtered)
   }
 
   async function createLeague() {
@@ -114,20 +122,16 @@ export default function LeaguesPage() {
 
       <div className="mb-10">
 
-        <h2 className="text-sm uppercase text-zinc-500 mb-3">
-          Create League
-        </h2>
-
         <input
           value={leagueName}
           onChange={(e) => setLeagueName(e.target.value)}
           placeholder="League name"
-          className="w-full bg-zinc-800 p-3 rounded-xl mb-3"
+          className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-3"
         />
 
         <button
           onClick={createLeague}
-          className="w-full bg-green-500 text-black py-3 rounded-xl"
+          className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
         >
           Create League
         </button>
@@ -138,20 +142,16 @@ export default function LeaguesPage() {
 
       <div className="mb-10">
 
-        <h2 className="text-sm uppercase text-zinc-500 mb-3">
-          Join League
-        </h2>
-
         <input
           value={joinCode}
           onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
           placeholder="Enter invite code"
-          className="w-full bg-zinc-800 p-3 rounded-xl mb-3 text-center tracking-widest"
+          className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-3 text-center tracking-widest"
         />
 
         <button
           onClick={joinLeague}
-          className="w-full bg-green-500 text-black py-3 rounded-xl"
+          className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
         >
           Join League
         </button>
@@ -164,16 +164,22 @@ export default function LeaguesPage() {
 
       </div>
 
-      {/* MY LEAGUES */}
+      {/* LEAGUES */}
 
       <div className="space-y-4">
+
+        {leagues.length === 0 && (
+          <p className="text-zinc-500 text-center">
+            You are not in any leagues yet
+          </p>
+        )}
 
         {leagues.map((league) => (
 
           <div
             key={league.id}
             onClick={() => router.push(`/leagues/${league.id}`)}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-green-500 transition"
+            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.6)] transition"
           >
             {league.name}
           </div>
