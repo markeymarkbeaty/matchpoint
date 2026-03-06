@@ -25,27 +25,47 @@ export default function LeaguesPage() {
 
     if (!user) return
 
-    const { data } = await supabase
+    const { data: membership } = await supabase
       .from('league_members')
-      .select(`
-        league_id,
-        leagues (
-          id,
-          name,
-          owner_id,
-          profiles ( username )
-        )
-      `)
+      .select('league_id')
       .eq('user_id', user.id)
 
-    if (!data) {
+    if (!membership || membership.length === 0) {
       setLeagues([])
       return
     }
 
-    const leagueList = data.map((l: any) => l.leagues)
+    const leagueIds = membership.map(m => m.league_id)
 
-    setLeagues(leagueList)
+    const { data: leaguesData } = await supabase
+      .from('leagues')
+      .select('*')
+      .in('id', leagueIds)
+
+    if (!leaguesData) {
+      setLeagues([])
+      return
+    }
+
+    const ownerIds = leaguesData.map(l => l.owner_id)
+
+    const { data: owners } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', ownerIds)
+
+    const ownerMap: any = {}
+
+    owners?.forEach(o => {
+      ownerMap[o.id] = o.username
+    })
+
+    const formatted = leaguesData.map(l => ({
+      ...l,
+      owner_name: ownerMap[l.owner_id] || 'User'
+    }))
+
+    setLeagues(formatted)
   }
 
   async function createLeague() {
@@ -111,7 +131,7 @@ export default function LeaguesPage() {
         My Leagues
       </h1>
 
-      {/* CREATE LEAGUE */}
+      {/* CREATE */}
 
       <div className="mb-10">
 
@@ -131,7 +151,7 @@ export default function LeaguesPage() {
 
       </div>
 
-      {/* JOIN LEAGUE */}
+      {/* JOIN */}
 
       <div className="mb-10">
 
@@ -139,7 +159,7 @@ export default function LeaguesPage() {
           value={joinCode}
           onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
           placeholder="Enter invite code"
-          className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-3 text-center tracking-widest"
+          className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-xl mb-3 text-center"
         />
 
         <button
@@ -151,7 +171,7 @@ export default function LeaguesPage() {
 
       </div>
 
-      {/* LEAGUES */}
+      {/* LIST */}
 
       <div className="space-y-4">
 
@@ -168,7 +188,7 @@ export default function LeaguesPage() {
             </div>
 
             <div className="text-sm text-zinc-500">
-              Created by {league.profiles?.username}
+              Created by {league.owner_name}
             </div>
 
           </div>
