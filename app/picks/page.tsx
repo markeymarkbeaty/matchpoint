@@ -70,6 +70,7 @@ export default function PicksPage() {
 
       const updated = { ...picks }
       delete updated[matchId]
+
       setPicks(updated)
 
       return
@@ -112,19 +113,33 @@ export default function PicksPage() {
     (m) => new Date(m.date) <= now
   )
 
-  function MatchCard(match: any) {
+  function MatchCard({
+    id,
+    home_team,
+    away_team,
+    home_logo,
+    away_logo,
+    stadium,
+    city,
+    state,
+    date,
+    result
+  }: any) {
 
-    const kickoff = new Date(match.date)
+    const kickoff = new Date(date)
     const locked = new Date() >= kickoff
-    const userPick = picks[match.id]
-    const result = match.result
 
-    const correct = userPick && result && userPick === result
+    const userPick = picks[id]
+
+    const correct =
+      userPick !== undefined &&
+      result !== null &&
+      userPick === result
 
     return (
 
       <div
-        key={match.id}
+        key={id}
         className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
       >
 
@@ -133,13 +148,13 @@ export default function PicksPage() {
         <div className="text-center mb-5">
 
           <div className="text-sm text-zinc-400">
-            {formatDate(match.date)}
+            {formatDate(date)}
           </div>
 
-          {match.stadium && (
+          {stadium && (
             <div className="text-xs text-zinc-500 mt-1">
-              {match.stadium}
-              {match.city && ` — ${match.city}${match.state ? `, ${match.state}` : ''}`}
+              {stadium}
+              {city && ` — ${city}${state ? `, ${state}` : ''}`}
             </div>
           )}
 
@@ -151,16 +166,16 @@ export default function PicksPage() {
 
           <div className="flex items-center gap-3">
 
-            {match.home_logo && (
+            {home_logo && (
               <img
-                src={match.home_logo}
-                alt={match.home_team}
+                src={home_logo}
+                alt={home_team}
                 className="w-9 h-9 object-contain"
               />
             )}
 
             <span className="font-semibold">
-              {match.home_team}
+              {home_team}
             </span>
 
           </div>
@@ -172,13 +187,13 @@ export default function PicksPage() {
           <div className="flex items-center justify-end gap-3">
 
             <span className="font-semibold">
-              {match.away_team}
+              {away_team}
             </span>
 
-            {match.away_logo && (
+            {away_logo && (
               <img
-                src={match.away_logo}
-                alt={match.away_team}
+                src={away_logo}
+                alt={away_team}
                 className="w-9 h-9 object-contain"
               />
             )}
@@ -207,14 +222,14 @@ export default function PicksPage() {
 
           {['home','draw','away'].map((team) => {
 
-            const selected = picks[match.id] === team
+            const selected = picks[id] === team
 
             return (
 
               <button
                 key={team}
                 disabled={locked}
-                onClick={() => makePick(match.id, team, match.date)}
+                onClick={() => makePick(id, team, date)}
                 className={`relative py-2 rounded-xl border transition ${
                   selected
                     ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
@@ -243,7 +258,9 @@ export default function PicksPage() {
     )
   }
 
-  const displayedMatches = tab === 'upcoming' ? upcomingMatches : pastMatches
+  const displayedMatches = tab === 'upcoming'
+    ? upcomingMatches
+    : pastMatches
 
   return (
 
@@ -284,7 +301,7 @@ export default function PicksPage() {
       <div className="space-y-6">
 
         {displayedMatches.map((match) => (
-          <MatchCard {...match} />
+          <MatchCard key={match.id} {...match} />
         ))}
 
       </div>
