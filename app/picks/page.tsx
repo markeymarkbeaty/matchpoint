@@ -103,6 +103,16 @@ export default function PicksPage() {
     })
   }
 
+  function getMatchWeek(dateString: string) {
+
+    const seasonStart = new Date('2026-03-01')
+    const matchDate = new Date(dateString)
+
+    const diff = matchDate.getTime() - seasonStart.getTime()
+
+    return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
+  }
+
   const now = new Date()
 
   const upcomingMatches = matches.filter(
@@ -112,6 +122,23 @@ export default function PicksPage() {
   const pastMatches = matches.filter(
     (m) => new Date(m.date) <= now
   )
+
+  const displayedMatches =
+    tab === 'upcoming' ? upcomingMatches : pastMatches
+
+  const groupedMatches = displayedMatches.reduce((acc: any, match: any) => {
+
+    const week = getMatchWeek(match.date)
+
+    if (!acc[week]) {
+      acc[week] = []
+    }
+
+    acc[week].push(match)
+
+    return acc
+
+  }, {})
 
   function MatchCard({
     id,
@@ -143,8 +170,6 @@ export default function PicksPage() {
         className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
       >
 
-        {/* MATCH INFO */}
-
         <div className="text-center mb-5">
 
           <div className="text-sm text-zinc-400">
@@ -159,8 +184,6 @@ export default function PicksPage() {
           )}
 
         </div>
-
-        {/* TEAM ROW */}
 
         <div className="grid grid-cols-3 items-center mb-4">
 
@@ -202,21 +225,17 @@ export default function PicksPage() {
 
         </div>
 
-        {/* RESULT FEEDBACK */}
-
         {locked && userPick && result && (
 
-          <div className={`text-center text-sm mb-4 font-medium ${
-            correct ? 'text-green-400' : 'text-red-400'
-          }`}>
-
+          <div
+            className={`text-center text-sm mb-4 font-medium ${
+              correct ? 'text-green-400' : 'text-red-400'
+            }`}
+          >
             {correct ? '✓ Correct Pick' : '✕ Incorrect Pick'}
-
           </div>
 
         )}
-
-        {/* PICK BUTTONS */}
 
         <div className="grid grid-cols-3 gap-3">
 
@@ -258,10 +277,6 @@ export default function PicksPage() {
     )
   }
 
-  const displayedMatches = tab === 'upcoming'
-    ? upcomingMatches
-    : pastMatches
-
   return (
 
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
@@ -269,8 +284,6 @@ export default function PicksPage() {
       <h1 className="text-3xl font-semibold mb-6">
         Picks
       </h1>
-
-      {/* TABS */}
 
       <div className="flex mb-6 border-b border-zinc-800">
 
@@ -298,13 +311,25 @@ export default function PicksPage() {
 
       </div>
 
-      <div className="space-y-6">
+      {Object.keys(groupedMatches).map((week) => (
 
-        {displayedMatches.map((match) => (
-          <MatchCard key={match.id} {...match} />
-        ))}
+        <div key={week}>
 
-      </div>
+          <h2 className="text-lg font-semibold text-zinc-400 mb-4">
+            Week {week}
+          </h2>
+
+          <div className="space-y-6 mb-10">
+
+            {groupedMatches[week].map((match: any) => (
+              <MatchCard key={match.id} {...match} />
+            ))}
+
+          </div>
+
+        </div>
+
+      ))}
 
       <BottomNav />
 
