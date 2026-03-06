@@ -25,28 +25,27 @@ export default function LeaguesPage() {
 
     if (!user) return
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('league_members')
       .select(`
         league_id,
         leagues (
           id,
           name,
-          archived
+          owner_id,
+          profiles ( username )
         )
       `)
       .eq('user_id', user.id)
 
-    if (error || !data) {
+    if (!data) {
       setLeagues([])
       return
     }
 
-    const filtered = data
-      .map((l: any) => l.leagues)
-      .filter((league: any) => league && league.archived === false)
+    const leagueList = data.map((l: any) => l.leagues)
 
-    setLeagues(filtered)
+    setLeagues(leagueList)
   }
 
   async function createLeague() {
@@ -95,17 +94,11 @@ export default function LeaguesPage() {
       return
     }
 
-    const { error } = await supabase.from('league_members').insert({
+    await supabase.from('league_members').insert({
       league_id: invite.league_id,
       user_id: user.id
     })
 
-    if (error) {
-      setMessage('You are already in this league')
-      return
-    }
-
-    setMessage('League joined!')
     setJoinCode('')
     loadLeagues()
   }
@@ -156,23 +149,11 @@ export default function LeaguesPage() {
           Join League
         </button>
 
-        {message && (
-          <p className="mt-3 text-green-400 text-center">
-            {message}
-          </p>
-        )}
-
       </div>
 
       {/* LEAGUES */}
 
       <div className="space-y-4">
-
-        {leagues.length === 0 && (
-          <p className="text-zinc-500 text-center">
-            You are not in any leagues yet
-          </p>
-        )}
 
         {leagues.map((league) => (
 
@@ -181,7 +162,15 @@ export default function LeaguesPage() {
             onClick={() => router.push(`/leagues/${league.id}`)}
             className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.6)] transition"
           >
-            {league.name}
+
+            <div className="font-semibold">
+              {league.name}
+            </div>
+
+            <div className="text-sm text-zinc-500">
+              Created by {league.profiles?.username}
+            </div>
+
           </div>
 
         ))}
