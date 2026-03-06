@@ -11,6 +11,8 @@ export default function LeaguesPage() {
 
   const [leagues, setLeagues] = useState<any[]>([])
   const [leagueName, setLeagueName] = useState('')
+  const [joinCode, setJoinCode] = useState('')
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     loadLeagues()
@@ -18,12 +20,25 @@ export default function LeaguesPage() {
 
   async function loadLeagues() {
 
-    const { data } = await supabase
-      .from('leagues')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
 
-    if (data) setLeagues(data)
+    if (!user) return
+
+    const { data } = await supabase
+      .from('league_members')
+      .select(`
+        league_id,
+        leagues(*)
+      `)
+      .eq('user_id', user.id)
+
+    if (data) {
+
+      const leagueList = data.map((l: any) => l.leagues)
+
+      setLeagues(leagueList)
+    }
   }
 
   async function createLeague() {
@@ -54,17 +69,54 @@ export default function LeaguesPage() {
     }
   }
 
+  async function joinLeague() {
+
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
+
+    if (!user || !joinCode) return
+
+    const { data: invite } = await supabase
+      .from('league_invites')
+      .select('*')
+      .eq('invite_code', joinCode)
+      .single()
+
+    if (!invite) {
+      setMessage('Invalid invite code')
+      return
+    }
+
+    const { error } = await supabase.from('league_members').insert({
+      league_id: invite.league_id,
+      user_id: user.id
+    })
+
+    if (error) {
+      setMessage('You are already in this league')
+      return
+    }
+
+    setMessage('League joined!')
+    setJoinCode('')
+    loadLeagues()
+  }
+
   return (
 
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
       <h1 className="text-3xl font-semibold mb-8">
-        Leagues
+        My Leagues
       </h1>
 
       {/* CREATE LEAGUE */}
 
       <div className="mb-10">
+
+        <h2 className="text-sm uppercase text-zinc-500 mb-3">
+          Create League
+        </h2>
 
         <input
           value={leagueName}
@@ -82,7 +134,37 @@ export default function LeaguesPage() {
 
       </div>
 
-      {/* LEAGUE LIST */}
+      {/* JOIN LEAGUE */}
+
+      <div className="mb-10">
+
+        <h2 className="text-sm uppercase text-zinc-500 mb-3">
+          Join League
+        </h2>
+
+        <input
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+          placeholder="Enter invite code"
+          className="w-full bg-zinc-800 p-3 rounded-xl mb-3 text-center tracking-widest"
+        />
+
+        <button
+          onClick={joinLeague}
+          className="w-full bg-green-500 text-black py-3 rounded-xl"
+        >
+          Join League
+        </button>
+
+        {message && (
+          <p className="mt-3 text-green-400 text-center">
+            {message}
+          </p>
+        )}
+
+      </div>
+
+      {/* MY LEAGUES */}
 
       <div className="space-y-4">
 
