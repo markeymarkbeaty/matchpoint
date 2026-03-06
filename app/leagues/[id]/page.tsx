@@ -8,11 +8,25 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
   const [league, setLeague] = useState<any>(null)
   const [members, setMembers] = useState<any[]>([])
+  const [memberList, setMemberList] = useState<any[]>([])
+  const [inviteLink, setInviteLink] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    generateInvite()
     loadLeague()
   }, [])
+
+  function generateInvite() {
+    if (typeof window !== 'undefined') {
+      setInviteLink(`${window.location.origin}/leagues/${params.id}`)
+    }
+  }
+
+  function copyInvite() {
+    navigator.clipboard.writeText(inviteLink)
+    alert('Invite link copied!')
+  }
 
   async function loadLeague() {
 
@@ -38,6 +52,8 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
       setLoading(false)
       return
     }
+
+    setMemberList(memberData)
 
     const userIds = memberData.map((m) => m.user_id)
 
@@ -74,32 +90,98 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
         {league?.name || 'League'}
       </h1>
 
-      {loading && (
-        <p className="text-zinc-400">
-          Loading leaderboard...
+      {/* Invite Friends */}
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
+
+        <h2 className="text-lg font-semibold mb-3">
+          Invite Friends
+        </h2>
+
+        <p className="text-sm text-zinc-400 mb-3">
+          Share this link to invite friends to your league
         </p>
-      )}
 
-      <div className="space-y-3">
+        <div className="flex gap-3">
 
-        {members.map((member, index) => (
+          <input
+            value={inviteLink}
+            readOnly
+            className="flex-1 bg-zinc-800 rounded-lg px-3 py-2 text-sm"
+          />
 
-          <div
-            key={index}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex justify-between"
+          <button
+            onClick={copyInvite}
+            className="bg-green-500 text-black px-4 py-2 rounded-lg font-medium"
           >
+            Copy
+          </button>
 
-            <span className="font-medium">
-              {index + 1}. {member.username}
-            </span>
+        </div>
 
-            <span className="text-green-400 font-semibold">
-              {member.score}
-            </span>
+      </div>
 
-          </div>
+      {/* Members */}
 
-        ))}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
+
+        <h2 className="text-lg font-semibold mb-4">
+          Members
+        </h2>
+
+        <div className="space-y-2">
+
+          {memberList.map((member, index) => (
+
+            <div
+              key={index}
+              className="border-b border-zinc-800 pb-2"
+            >
+              {member.profiles?.username || 'User'}
+            </div>
+
+          ))}
+
+        </div>
+
+      </div>
+
+      {/* Leaderboard */}
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+
+        <h2 className="text-lg font-semibold mb-4">
+          League Leaderboard
+        </h2>
+
+        {loading && (
+          <p className="text-zinc-400">
+            Loading leaderboard...
+          </p>
+        )}
+
+        <div className="space-y-3">
+
+          {members.map((member, index) => (
+
+            <div
+              key={index}
+              className="bg-zinc-800 border border-zinc-700 rounded-xl p-4 flex justify-between"
+            >
+
+              <span className="font-medium">
+                {index + 1}. {member.username}
+              </span>
+
+              <span className="text-green-400 font-semibold">
+                {member.score}
+              </span>
+
+            </div>
+
+          ))}
+
+        </div>
 
       </div>
 

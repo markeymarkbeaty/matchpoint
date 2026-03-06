@@ -105,10 +105,11 @@ export default function PicksPage() {
 
   function getMatchWeek(dateString: string) {
 
-    const seasonStart = new Date('2026-03-01')
+    const SEASON_START = new Date('2026-03-15') // NWSL opening weekend
+
     const matchDate = new Date(dateString)
 
-    const diff = matchDate.getTime() - seasonStart.getTime()
+    const diff = matchDate.getTime() - SEASON_START.getTime()
 
     return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
   }
@@ -126,13 +127,9 @@ export default function PicksPage() {
   const displayedMatches =
     tab === 'upcoming' ? upcomingMatches : pastMatches
 
-  const weeks = displayedMatches.map(m => getMatchWeek(m.date))
-  const minWeek = weeks.length ? Math.min(...weeks) : 1
-
   const groupedMatches = displayedMatches.reduce((acc: any, match: any) => {
 
-    const rawWeek = getMatchWeek(match.date)
-    const week = rawWeek - minWeek + 1
+    const week = getMatchWeek(match.date)
 
     if (!acc[week]) {
       acc[week] = []
