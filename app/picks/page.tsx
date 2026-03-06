@@ -126,9 +126,13 @@ export default function PicksPage() {
   const displayedMatches =
     tab === 'upcoming' ? upcomingMatches : pastMatches
 
+  const weeks = displayedMatches.map(m => getMatchWeek(m.date))
+  const minWeek = weeks.length ? Math.min(...weeks) : 1
+
   const groupedMatches = displayedMatches.reduce((acc: any, match: any) => {
 
-    const week = getMatchWeek(match.date)
+    const rawWeek = getMatchWeek(match.date)
+    const week = rawWeek - minWeek + 1
 
     if (!acc[week]) {
       acc[week] = []
