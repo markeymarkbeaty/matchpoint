@@ -36,10 +36,12 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
       .eq('id', params.id)
       .single()
 
-    setLeague(leagueData)
-    setEditName(leagueData?.name)
+    if (!leagueData) return
 
-    if (leagueData?.owner_id === user?.id) {
+    setLeague(leagueData)
+    setEditName(leagueData.name)
+
+    if (leagueData.owner_id === user?.id) {
       setIsOwner(true)
     }
 
@@ -47,38 +49,62 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
       .from('league_members')
       .select(`
         user_id,
-        profiles(username)
+        profiles (
+          username
+        )
       `)
       .eq('league_id', params.id)
 
-    if (!memberData) return
+    if (!memberData) {
+      setLoading(false)
+      return
+    }
 
     setMemberList(memberData)
 
-    const userIds = memberData.map((m) => m.user_id)
+    const userIds = memberData.map(m => m.user_id)
 
     const { data: picks } = await supabase
       .from('picks')
       .select('user_id,is_correct')
       .in('user_id', userIds)
 
-    const scoreMap: Record<string, number> = {}
+    const stats: any = {}
 
-    picks?.forEach((pick) => {
-      if (pick.is_correct) {
-        scoreMap[pick.user_id] = (scoreMap[pick.user_id] || 0) + 1
+    picks?.forEach(pick => {
+
+      if (!stats[pick.user_id]) {
+        stats[pick.user_id] = { wins: 0, total: 0 }
       }
+
+      stats[pick.user_id].total++
+
+      if (pick.is_correct) {
+        stats[pick.user_id].wins++
+      }
+
     })
 
-    const leaderboard = memberData.map((member: any) => ({
-      username: member.profiles?.username || 'User',
-      score: scoreMap[member.user_id] || 0
-    }))
+    const leaderboard = memberData.map((member: any) => {
 
-    leaderboard.sort((a, b) => b.score - a.score)
+      const userStats = stats[member.user_id] || { wins: 0, total: 0 }
+
+      const accuracy =
+        userStats.total > 0
+          ? Math.round((userStats.wins / userStats.total) * 100)
+          : 0
+
+      return {
+        username: member.profiles?.username || 'User',
+        wins: userStats.wins,
+        accuracy
+      }
+
+    })
+
+    leaderboard.sort((a, b) => b.wins - a.wins)
 
     setMembers(leaderboard)
-
     setLoading(false)
   }
 
@@ -95,43 +121,18 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
     const code = generateCode()
 
-    const { error } = await supabase.from('league_invites').insert({
-      league_id: params.id,
-      invite_code: code,
-      created_by: user.id
-    })
+    const { error } = await supabase
+      .from('league_invites')
+      .insert({
+        league_id: params.id,
+        invite_code: code,
+        created_by: user.id
+      })
 
     if (!error) {
       setInviteCode(code)
       setMessage('Invite code created!')
     }
-  }
-
-  async function joinLeague() {
-
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
-
-    if (!user || !joinCode) return
-
-    const { data: invite } = await supabase
-      .from('league_invites')
-      .select('*')
-      .eq('invite_code', joinCode)
-      .single()
-
-    if (!invite) {
-      setMessage('Invalid invite code')
-      return
-    }
-
-    await supabase.from('league_members').insert({
-      league_id: invite.league_id,
-      user_id: user.id
-    })
-
-    setMessage('You joined the league!')
-    setJoinCode('')
   }
 
   async function leaveLeague() {
@@ -143,20 +144,16 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
     const { data } = await supabase.auth.getUser()
     const user = data.user
 
-    if (!user) return
-
     await supabase
       .from('league_members')
       .delete()
       .eq('league_id', params.id)
-      .eq('user_id', user.id)
+      .eq('user_id', user?.id)
 
     router.push('/leagues')
   }
 
   async function updateLeagueName() {
-
-    if (!editName) return
 
     await supabase
       .from('leagues')
@@ -168,7 +165,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
   async function archiveLeague() {
 
-    const confirmArchive = confirm('Archive this league?')
+    const confirmArchive = confirm('Archive league?')
 
     if (!confirmArchive) return
 
@@ -185,104 +182,117 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
       <h1 className="text-3xl font-semibold mb-8">
-        {league?.name || 'League'}
+        {league ? `${league.name} League` : 'League'}
       </h1>
 
-      {/* Leaderboard */}
+      {/* LEADERBOARD */}
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
+      <div className="space-y-4 mb-10">
 
-        <h2 className="text-lg font-semibold mb-4">
+        <h2 className="text-lg text-zinc-400">
           Leaderboard
         </h2>
 
-        {members.map((member, index) => (
+        {members.map((member, index) => {
 
-          <div
-            key={index}
-            className="bg-zinc-800 border border-zinc-700 rounded-xl p-4 flex justify-between mb-3"
-          >
-            <span>{index + 1}. {member.username}</span>
-            <span className="text-green-400">{member.score}</span>
-          </div>
+          let rank = `${index + 1}.`
 
-        ))}
+          if (index === 0) rank = '🥇'
+          if (index === 1) rank = '🥈'
+          if (index === 2) rank = '🥉'
+
+          return (
+
+            <div
+              key={index}
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex justify-between items-center hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.6)] transition"
+            >
+
+              <div className="flex items-center gap-3">
+
+                <span className="text-lg">
+                  {rank}
+                </span>
+
+                <span className="font-medium">
+                  {member.username}
+                </span>
+
+              </div>
+
+              <div className="text-right text-sm">
+
+                <div className="text-green-400 font-semibold">
+                  {member.wins} wins
+                </div>
+
+                <div className="text-zinc-500">
+                  {member.accuracy}% accuracy
+                </div>
+
+              </div>
+
+            </div>
+
+          )
+
+        })}
 
       </div>
 
-      {/* Members */}
+      {/* MEMBERS */}
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
+      <div className="space-y-3 mb-10">
 
-        <h2 className="text-lg font-semibold mb-4">
+        <h2 className="text-lg text-zinc-400">
           Members
         </h2>
 
         {memberList.map((member, index) => (
 
-          <div key={index} className="border-b border-zinc-800 pb-2 mb-2">
-            {member.profiles?.username || 'User'}
+          <div
+            key={index}
+            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+          >
+            {member.profiles?.username}
           </div>
 
         ))}
 
       </div>
 
-      {/* Invite */}
+      {/* INVITE */}
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
-
-        <h2 className="text-lg font-semibold mb-6">
-          Invite
-        </h2>
+      <div className="space-y-4 mb-10">
 
         <button
           onClick={createInvite}
-          className="w-full bg-green-500 text-black py-3 rounded-xl mb-6"
+          className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
         >
           Generate Invite Code
         </button>
 
         {inviteCode && (
-          <div className="bg-zinc-800 rounded-xl p-4 text-center mb-6">
-            <p className="text-zinc-400 text-sm mb-1">
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+
+            <p className="text-zinc-400 text-sm">
               Share this code
             </p>
+
             <p className="text-2xl font-bold tracking-widest">
               {inviteCode}
             </p>
+
           </div>
-        )}
 
-        <input
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-          placeholder="Enter invite code"
-          className="w-full bg-zinc-800 p-3 rounded-xl mb-4 text-center"
-        />
-
-        <button
-          onClick={joinLeague}
-          className="w-full bg-green-500 text-black py-3 rounded-xl"
-        >
-          Join League
-        </button>
-
-        {message && (
-          <p className="mt-6 text-center text-green-400">
-            {message}
-          </p>
         )}
 
       </div>
 
-      {/* League Settings */}
+      {/* SETTINGS */}
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
-
-        <h2 className="text-lg font-semibold mb-4">
-          League Settings
-        </h2>
+      <div className="space-y-3">
 
         {isOwner && (
 
@@ -290,29 +300,29 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
             <input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="w-full bg-zinc-800 p-3 rounded-xl mb-3"
+              className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-xl"
             />
 
             <button
               onClick={updateLeagueName}
-              className="w-full bg-green-500 text-black py-3 rounded-xl mb-4"
+              className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
             >
               Update League Name
             </button>
 
             <button
               onClick={archiveLeague}
-              className="w-full bg-yellow-500 text-black py-3 rounded-xl mb-4"
+              className="w-full py-3 rounded-xl bg-yellow-500 text-black"
             >
               Archive League
             </button>
-          </>
 
+          </>
         )}
 
         <button
           onClick={leaveLeague}
-          className="w-full bg-red-500 text-white py-3 rounded-xl"
+          className="w-full py-3 rounded-xl bg-red-500 text-white"
         >
           Leave League
         </button>
