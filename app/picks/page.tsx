@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 
 export default function PicksPage() {
 
-  const router = useRouter()
-
   const [matches, setMatches] = useState<any[]>([])
   const [picks, setPicks] = useState<any>({})
+  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
 
   useEffect(() => {
     loadMatches()
@@ -72,7 +70,6 @@ export default function PicksPage() {
 
       const updated = { ...picks }
       delete updated[matchId]
-
       setPicks(updated)
 
       return
@@ -190,18 +187,6 @@ export default function PicksPage() {
 
         </div>
 
-        {/* SCORE (IF COMPLETE) */}
-
-        {match.home_score !== null && match.away_score !== null && (
-
-          <div className="text-center mb-4 text-lg font-semibold">
-
-            {match.home_score} — {match.away_score}
-
-          </div>
-
-        )}
-
         {/* RESULT FEEDBACK */}
 
         {locked && userPick && result && (
@@ -220,50 +205,36 @@ export default function PicksPage() {
 
         <div className="grid grid-cols-3 gap-3">
 
-          <button
-            disabled={locked}
-            onClick={() => makePick(match.id, 'home', match.date)}
-            className={`relative py-2 rounded-xl ${
-              picks[match.id] === 'home'
-                ? 'bg-green-500 text-black ring-2 ring-green-400 shadow-lg shadow-green-500/20'
-                : 'bg-zinc-800'
-            } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
-          >
-            Home
-            {picks[match.id] === 'home' && (
-              <span className="absolute right-2 top-1 text-sm">✓</span>
-            )}
-          </button>
+          {['home','draw','away'].map((team) => {
 
-          <button
-            disabled={locked}
-            onClick={() => makePick(match.id, 'draw', match.date)}
-            className={`relative py-2 rounded-xl ${
-              picks[match.id] === 'draw'
-                ? 'bg-green-500 text-black ring-2 ring-green-400 shadow-lg shadow-green-500/20'
-                : 'bg-zinc-800'
-            } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
-          >
-            Draw
-            {picks[match.id] === 'draw' && (
-              <span className="absolute right-2 top-1 text-sm">✓</span>
-            )}
-          </button>
+            const selected = picks[match.id] === team
 
-          <button
-            disabled={locked}
-            onClick={() => makePick(match.id, 'away', match.date)}
-            className={`relative py-2 rounded-xl ${
-              picks[match.id] === 'away'
-                ? 'bg-green-500 text-black ring-2 ring-green-400 shadow-lg shadow-green-500/20'
-                : 'bg-zinc-800'
-            } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
-          >
-            Away
-            {picks[match.id] === 'away' && (
-              <span className="absolute right-2 top-1 text-sm">✓</span>
-            )}
-          </button>
+            return (
+
+              <button
+                key={team}
+                disabled={locked}
+                onClick={() => makePick(match.id, team, match.date)}
+                className={`relative py-2 rounded-xl border transition ${
+                  selected
+                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                    : 'border-zinc-700 text-white'
+                } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
+              >
+
+                {team.charAt(0).toUpperCase() + team.slice(1)}
+
+                {selected && (
+                  <span className="absolute right-2 top-1 text-sm text-green-300">
+                    ✓
+                  </span>
+                )}
+
+              </button>
+
+            )
+
+          })}
 
         </div>
 
@@ -272,33 +243,47 @@ export default function PicksPage() {
     )
   }
 
+  const displayedMatches = tab === 'upcoming' ? upcomingMatches : pastMatches
+
   return (
 
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold mb-8">
+      <h1 className="text-3xl font-semibold mb-6">
         Picks
       </h1>
 
-      <h2 className="text-lg font-semibold mb-4 text-zinc-300">
-        Upcoming Matches
-      </h2>
+      {/* TABS */}
 
-      <div className="space-y-6 mb-10">
+      <div className="flex mb-6 border-b border-zinc-800">
 
-        {upcomingMatches.map((match) => (
-          <MatchCard {...match} />
-        ))}
+        <button
+          onClick={() => setTab('upcoming')}
+          className={`flex-1 pb-3 ${
+            tab === 'upcoming'
+              ? 'border-b-2 border-green-400 text-green-400'
+              : 'text-zinc-500'
+          }`}
+        >
+          Upcoming
+        </button>
+
+        <button
+          onClick={() => setTab('past')}
+          className={`flex-1 pb-3 ${
+            tab === 'past'
+              ? 'border-b-2 border-green-400 text-green-400'
+              : 'text-zinc-500'
+          }`}
+        >
+          Past
+        </button>
 
       </div>
 
-      <h2 className="text-lg font-semibold mb-4 text-zinc-500">
-        Past Matches
-      </h2>
-
       <div className="space-y-6">
 
-        {pastMatches.map((match) => (
+        {displayedMatches.map((match) => (
           <MatchCard {...match} />
         ))}
 
