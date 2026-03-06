@@ -9,24 +9,15 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
   const [league, setLeague] = useState<any>(null)
   const [members, setMembers] = useState<any[]>([])
   const [memberList, setMemberList] = useState<any[]>([])
-  const [inviteLink, setInviteLink] = useState('')
   const [loading, setLoading] = useState(true)
 
+  const [inviteCode, setInviteCode] = useState('')
+  const [joinCode, setJoinCode] = useState('')
+  const [message, setMessage] = useState('')
+
   useEffect(() => {
-    generateInvite()
     loadLeague()
   }, [])
-
-  function generateInvite() {
-    if (typeof window !== 'undefined') {
-      setInviteLink(`${window.location.origin}/leagues/${params.id}`)
-    }
-  }
-
-  function copyInvite() {
-    navigator.clipboard.writeText(inviteLink)
-    alert('Invite link copied!')
-  }
 
   async function loadLeague() {
 
@@ -82,6 +73,58 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
     setLoading(false)
   }
 
+  function generateCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase()
+  }
+
+  async function createInvite() {
+
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
+
+    if (!user) return
+
+    const code = generateCode()
+
+    const { error } = await supabase.from('league_invites').insert({
+      league_id: params.id,
+      invite_code: code,
+      created_by: user.id
+    })
+
+    if (!error) {
+      setInviteCode(code)
+      setMessage('Invite code created!')
+    }
+  }
+
+  async function joinLeague() {
+
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
+
+    if (!user || !joinCode) return
+
+    const { data: invite } = await supabase
+      .from('league_invites')
+      .select('*')
+      .eq('invite_code', joinCode)
+      .single()
+
+    if (!invite) {
+      setMessage('Invalid invite code')
+      return
+    }
+
+    await supabase.from('league_members').insert({
+      league_id: invite.league_id,
+      user_id: user.id
+    })
+
+    setMessage('You joined the league!')
+    setJoinCode('')
+  }
+
   return (
 
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
@@ -90,68 +133,12 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
         {league?.name || 'League'}
       </h1>
 
-      {/* Invite Friends */}
-
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
-
-        <h2 className="text-lg font-semibold mb-3">
-          Invite Friends
-        </h2>
-
-        <p className="text-sm text-zinc-400 mb-3">
-          Share this link to invite friends to your league
-        </p>
-
-        <div className="flex gap-3">
-
-          <input
-            value={inviteLink}
-            readOnly
-            className="flex-1 bg-zinc-800 rounded-lg px-3 py-2 text-sm"
-          />
-
-          <button
-            onClick={copyInvite}
-            className="bg-green-500 text-black px-4 py-2 rounded-lg font-medium"
-          >
-            Copy
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* Members */}
+      {/* LEADERBOARD */}
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
 
         <h2 className="text-lg font-semibold mb-4">
-          Members
-        </h2>
-
-        <div className="space-y-2">
-
-          {memberList.map((member, index) => (
-
-            <div
-              key={index}
-              className="border-b border-zinc-800 pb-2"
-            >
-              {member.profiles?.username || 'User'}
-            </div>
-
-          ))}
-
-        </div>
-
-      </div>
-
-      {/* Leaderboard */}
-
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-
-        <h2 className="text-lg font-semibold mb-4">
-          League Leaderboard
+          Leaderboard
         </h2>
 
         {loading && (
@@ -182,6 +169,88 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
           ))}
 
         </div>
+
+      </div>
+
+      {/* MEMBERS */}
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-8">
+
+        <h2 className="text-lg font-semibold mb-4">
+          Members
+        </h2>
+
+        <div className="space-y-2">
+
+          {memberList.map((member, index) => (
+
+            <div
+              key={index}
+              className="border-b border-zinc-800 pb-2"
+            >
+              {member.profiles?.username || 'User'}
+            </div>
+
+          ))}
+
+        </div>
+
+      </div>
+
+      {/* INVITE SECTION */}
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+
+        <h2 className="text-lg font-semibold mb-6">
+          Invite
+        </h2>
+
+        {/* CREATE INVITE */}
+
+        <button
+          onClick={createInvite}
+          className="w-full bg-green-500 text-black py-3 rounded-xl mb-6"
+        >
+          Generate Invite Code
+        </button>
+
+        {inviteCode && (
+
+          <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-4 text-center mb-6">
+
+            <p className="text-zinc-400 text-sm mb-1">
+              Share this code
+            </p>
+
+            <p className="text-2xl font-bold tracking-widest">
+              {inviteCode}
+            </p>
+
+          </div>
+
+        )}
+
+        {/* JOIN LEAGUE */}
+
+        <input
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+          placeholder="Enter invite code"
+          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 mb-4 text-center tracking-widest"
+        />
+
+        <button
+          onClick={joinLeague}
+          className="w-full bg-green-500 text-black py-3 rounded-xl"
+        >
+          Join League
+        </button>
+
+        {message && (
+          <p className="mt-6 text-center text-green-400">
+            {message}
+          </p>
+        )}
 
       </div>
 
