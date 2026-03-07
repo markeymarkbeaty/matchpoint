@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import BottomNav from '../../components/BottomNav'
 import { createClient } from '@supabase/supabase-js'
 
@@ -20,6 +21,7 @@ const supabase = createClient(
 export default function LeaderboardPage() {
 
   const [leaders, setLeaders] = useState<Leader[]>([])
+  const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function LeaderboardPage() {
       const data = await res.json()
 
       setLeaders(data || [])
+      setLoading(false)
 
     }
 
@@ -41,59 +44,42 @@ export default function LeaderboardPage() {
 
   }, [])
 
-  const topThree = leaders.slice(0, 3)
-  const rest = leaders.slice(3)
+  function medal(rank: number) {
+
+    if (rank === 0) return '🥇'
+    if (rank === 1) return '🥈'
+    if (rank === 2) return '🥉'
+
+    return null
+  }
 
   return (
 
-    <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
+    <div className="min-h-screen bg-black text-white px-5 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold mb-10">
+      <h1 className="text-3xl font-semibold tracking-tight mb-10">
         Global Leaderboard
       </h1>
 
-      {/* PODIUM */}
+      {loading && (
 
-      <div className="grid grid-cols-3 gap-4 mb-10 text-center">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
+          Loading...
+        </div>
 
-        {topThree.map((player, i) => {
+      )}
 
-          const medals = ['🥇', '🥈', '🥉']
+      {!loading && leaders.length === 0 && (
 
-          return (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
+          No players yet.
+        </div>
 
-            <div
-              key={player.user_id}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
-            >
-
-              <div className="text-3xl mb-2">
-                {medals[i]}
-              </div>
-
-              <div className="font-semibold">
-                {player.username}
-              </div>
-
-              <div className="text-sm text-zinc-400 mt-2">
-                {Number(player.total_units).toFixed(1)} units
-              </div>
-
-            </div>
-
-          )
-
-        })}
-
-      </div>
-
-      {/* REST OF LEADERBOARD */}
+      )}
 
       <div className="space-y-4">
 
-        {rest.map((leader, index) => {
-
-          const rank = index + 4
+        {leaders.map((leader, index) => {
 
           const units = Number(leader.total_units || 0)
 
@@ -114,43 +100,58 @@ export default function LeaderboardPage() {
                 ? 'text-red-400'
                 : 'text-white'
 
+          const medalIcon = medal(index)
+
           return (
 
-            <div
+            <motion.div
               key={leader.user_id}
-              className={`rounded-2xl p-6 border ${isCurrentUser
-                  ? 'bg-zinc-800 border-green-400'
-                  : 'bg-zinc-900 border-zinc-800'
-                }`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className={`
+                rounded-2xl p-6 border transition
+                hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.25)]
+                ${isCurrentUser ? 'bg-zinc-800 border-green-500' : 'bg-zinc-900 border-zinc-800'}
+              `}
             >
 
               <div className="flex justify-between items-center">
 
                 <div>
 
-                  <p className="text-xs text-zinc-500">
-                    Rank #{rank}
+                  <p className="text-xs text-zinc-500 mb-1">
+                    Rank #{index + 1}
                   </p>
 
-                  <p className="font-semibold">
+                  <p className="text-lg font-semibold flex items-center gap-2">
+
+                    {medalIcon && (
+                      <span className="text-xl">
+                        {medalIcon}
+                      </span>
+                    )}
+
                     {leader.username}
+
                     {isCurrentUser && (
-                      <span className="ml-2 text-xs text-green-400">
+                      <span className="text-xs text-green-400 ml-2">
                         (You)
                       </span>
                     )}
+
                   </p>
 
                 </div>
 
                 <div className="text-right">
 
-                  <p className={`text-lg font-semibold ${unitsColor}`}>
+                  <p className={`text-xl font-semibold ${unitsColor}`}>
                     {units > 0 ? '+' : ''}
                     {units.toFixed(1)}
                   </p>
 
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-500 mt-1">
                     {totalBets} Picks
                   </p>
 
@@ -162,7 +163,7 @@ export default function LeaderboardPage() {
 
               </div>
 
-            </div>
+            </motion.div>
 
           )
 
@@ -173,6 +174,5 @@ export default function LeaderboardPage() {
       <BottomNav />
 
     </div>
-
   )
 }
