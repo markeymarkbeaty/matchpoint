@@ -5,10 +5,26 @@ import { motion } from 'framer-motion'
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-black text-zinc-100 px-6 py-16">
-      <div className="max-w-4xl mx-auto">
+    <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 overflow-hidden">
 
-        <section className="text-center mb-20">
+      {/* Background logos */}
+
+      <div className="absolute inset-0 opacity-10 blur-2xl pointer-events-none">
+
+        <img
+          src="/nwsl-logos-bg.png"
+          className="w-full h-full object-cover"
+          alt=""
+        />
+
+      </div>
+
+      <div className="relative max-w-4xl mx-auto">
+
+        {/* HERO */}
+
+        <section className="text-center mb-16">
+
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -40,7 +56,14 @@ export default function HomePage() {
             </Link>
 
           </div>
+
         </section>
+
+        {/* Glow Divider */}
+
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-green-400 to-transparent mb-16 opacity-40" />
+
+        {/* FEATURES */}
 
         <section className="grid md:grid-cols-3 gap-8 mb-20">
 
@@ -61,7 +84,10 @@ export default function HomePage() {
 
         </section>
 
+        {/* INVITE */}
+
         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20 transition hover:border-green-400 hover:shadow-[0_0_16px_rgba(74,222,128,0.3)]">
+
           <h2 className="text-2xl font-semibold mb-4 text-green-400">
             Invite Your Friends
           </h2>
@@ -73,7 +99,10 @@ export default function HomePage() {
           <p className="text-zinc-500 text-sm break-all">
             https://matchpoint-one.vercel.app
           </p>
+
         </section>
+
+        {/* INVESTING */}
 
         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 transition hover:border-green-400 hover:shadow-[0_0_16px_rgba(74,222,128,0.3)]">
 
@@ -90,6 +119,7 @@ export default function HomePage() {
         </section>
 
       </div>
+
     </main>
   )
 }
