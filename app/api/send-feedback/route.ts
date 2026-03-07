@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
         const result = await resend.emails.send({
             from: 'MatchPoint <onboarding@resend.dev>',
-            to: 'Markeymarkbeaty@gmail.com',
+            to: 'mark@markbeaty.com',
             subject: 'New MatchPoint Feedback',
             html: `
         <h2>New MatchPoint Feedback</h2>
