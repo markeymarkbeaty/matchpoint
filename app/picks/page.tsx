@@ -105,7 +105,7 @@ export default function PicksPage() {
 
   function getMatchWeek(dateString: string) {
 
-    const SEASON_START = new Date('2026-03-15') // NWSL opening weekend
+    const SEASON_START = new Date('2026-03-15')
 
     const matchDate = new Date(dateString)
 
@@ -229,9 +229,8 @@ export default function PicksPage() {
         {locked && userPick && result && (
 
           <div
-            className={`text-center text-sm mb-4 font-medium ${
-              correct ? 'text-green-400' : 'text-red-400'
-            }`}
+            className={`text-center text-sm mb-4 font-medium ${correct ? 'text-green-400' : 'text-red-400'
+              }`}
           >
             {correct ? '✓ Correct Pick' : '✕ Incorrect Pick'}
           </div>
@@ -240,7 +239,7 @@ export default function PicksPage() {
 
         <div className="grid grid-cols-3 gap-3">
 
-          {['home','draw','away'].map((team) => {
+          {['home', 'draw', 'away'].map((team) => {
 
             const selected = picks[id] === team
 
@@ -250,11 +249,10 @@ export default function PicksPage() {
                 key={team}
                 disabled={locked}
                 onClick={() => makePick(id, team, date)}
-                className={`relative py-2 rounded-xl border transition ${
-                  selected
+                className={`relative py-2 rounded-xl border transition ${selected
                     ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                    : 'border-zinc-700 text-white'
-                } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
+                  } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
 
                 {team.charAt(0).toUpperCase() + team.slice(1)}
@@ -290,22 +288,20 @@ export default function PicksPage() {
 
         <button
           onClick={() => setTab('upcoming')}
-          className={`flex-1 pb-3 ${
-            tab === 'upcoming'
+          className={`flex-1 pb-3 ${tab === 'upcoming'
               ? 'border-b-2 border-green-400 text-green-400'
               : 'text-zinc-500'
-          }`}
+            }`}
         >
           Upcoming
         </button>
 
         <button
           onClick={() => setTab('past')}
-          className={`flex-1 pb-3 ${
-            tab === 'past'
+          className={`flex-1 pb-3 ${tab === 'past'
               ? 'border-b-2 border-green-400 text-green-400'
               : 'text-zinc-500'
-          }`}
+            }`}
         >
           Past
         </button>
