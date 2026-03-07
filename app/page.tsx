@@ -24,57 +24,69 @@ export default function HomePage() {
           </p>
 
           <div className="flex justify-center gap-4">
+
             <Link
               href="/auth"
-              className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-xl transition"
+              className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
             >
               Create Account
             </Link>
 
             <Link
               href="/auth"
-              className="border border-zinc-700 hover:border-zinc-500 px-6 py-3 rounded-xl transition"
+              className="bg-zinc-900 border border-zinc-700 px-6 py-3 rounded-xl transition hover:border-green-400 hover:shadow-[0_0_12px_rgba(74,222,128,0.4)]"
             >
               Log In
             </Link>
+
           </div>
         </section>
 
         <section className="grid md:grid-cols-3 gap-8 mb-20">
+
           <Feature
             title="Make Your Picks"
             description="Choose home, draw, or away before kickoff."
           />
+
           <Feature
             title="Track Results"
             description="Automatic scoring updates standings."
           />
+
           <Feature
             title="Compete With Friends"
             description="See who actually knows the league."
           />
+
         </section>
 
-        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20">
+        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20 transition hover:border-green-400 hover:shadow-[0_0_16px_rgba(74,222,128,0.3)]">
           <h2 className="text-2xl font-semibold mb-4 text-green-400">
             Invite Your Friends
           </h2>
+
           <p className="text-zinc-400 mb-4">
             The more players, the better the competition.
           </p>
+
           <p className="text-zinc-500 text-sm break-all">
-            https://matchpoint-ivory-pi.vercel.app
+            https://matchpoint-one.vercel.app
           </p>
         </section>
 
-        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 transition hover:border-green-400 hover:shadow-[0_0_16px_rgba(74,222,128,0.3)]">
+
           <h2 className="text-2xl font-semibold mb-4 text-green-400">
             Coming Soon: Bet Against Yourself
           </h2>
+
           <p className="text-zinc-400 leading-relaxed">
-            An optional savings layer where wins invest funds and losses return
-            principal. No gambling. Just better habits.
+            An optional savings layer where correct picks invest funds and
+            incorrect picks return principal. The goal is to encourage
+            disciplined saving and investing rather than gambling.
           </p>
+
         </section>
 
       </div>
@@ -84,9 +96,13 @@ export default function HomePage() {
 
 function Feature({ title, description }: { title: string; description: string }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-      <h3 className="text-lg font-semibold mb-2 text-green-400">{title}</h3>
-      <p className="text-zinc-400 text-sm leading-relaxed">{description}</p>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.3)]">
+      <h3 className="text-lg font-semibold mb-2 text-green-400">
+        {title}
+      </h3>
+      <p className="text-zinc-400 text-sm leading-relaxed">
+        {description}
+      </p>
     </div>
   )
 }
