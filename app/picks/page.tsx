@@ -250,8 +250,8 @@ export default function PicksPage() {
                 disabled={locked}
                 onClick={() => makePick(id, team, date)}
                 className={`relative py-2 rounded-xl border transition ${selected
-                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                    : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
+                  ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                  : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
                   } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
 
@@ -289,8 +289,8 @@ export default function PicksPage() {
         <button
           onClick={() => setTab('upcoming')}
           className={`flex-1 pb-3 ${tab === 'upcoming'
-              ? 'border-b-2 border-green-400 text-green-400'
-              : 'text-zinc-500'
+            ? 'border-b-2 border-green-400 text-green-400'
+            : 'text-zinc-500'
             }`}
         >
           Upcoming
@@ -299,8 +299,8 @@ export default function PicksPage() {
         <button
           onClick={() => setTab('past')}
           className={`flex-1 pb-3 ${tab === 'past'
-              ? 'border-b-2 border-green-400 text-green-400'
-              : 'text-zinc-500'
+            ? 'border-b-2 border-green-400 text-green-400'
+            : 'text-zinc-500'
             }`}
         >
           Past

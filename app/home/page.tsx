@@ -157,6 +157,13 @@ export default function HomePage() {
         </h2>
 
         <button
+          onClick={() => router.push('/dev-progress')}
+          className={buttonStyle}
+        >
+          Developer Goals & Progress
+        </button>
+
+        <button
           onClick={() => router.push('/feedback')}
           className={buttonStyle}
         >
