@@ -92,7 +92,7 @@ export default function AuthPage() {
 
     <main className="min-h-screen bg-black text-zinc-100 flex items-center justify-center px-6">
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-md">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full max-w-md transition hover:border-green-400 hover:shadow-[0_0_18px_rgba(74,222,128,0.25)]">
 
         <h1 className="text-2xl font-semibold mb-6 text-center">
           {isSignup ? 'Create Account' : 'Welcome Back'}
@@ -107,7 +107,7 @@ export default function AuthPage() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition"
             />
           )}
 
@@ -117,7 +117,7 @@ export default function AuthPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition"
           />
 
           <input
@@ -126,7 +126,7 @@ export default function AuthPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition"
           />
 
           {error && (
@@ -140,7 +140,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-3 rounded-xl transition disabled:opacity-50"
+            className="w-full bg-zinc-900 border border-green-400 text-green-300 font-semibold py-3 rounded-xl transition hover:shadow-[0_0_14px_rgba(74,222,128,0.6)] disabled:opacity-50"
           >
             {loading ? 'Please wait...' : isSignup ? 'Sign Up' : 'Log In'}
           </button>
@@ -167,5 +167,6 @@ export default function AuthPage() {
       </div>
 
     </main>
+
   )
 }
