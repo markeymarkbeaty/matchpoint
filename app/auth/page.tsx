@@ -101,14 +101,20 @@ export default function AuthPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
 
           {isSignup && (
-            <input
-              type="text"
-              placeholder="Username"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition"
-            />
+            <>
+              <input
+                type="text"
+                placeholder="Public username"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition"
+              />
+
+              <p className="text-xs text-zinc-500 -mt-2">
+                Other users will see this name on the global leaderboard.
+              </p>
+            </>
           )}
 
           <input
@@ -167,6 +173,5 @@ export default function AuthPage() {
       </div>
 
     </main>
-
   )
 }

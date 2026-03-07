@@ -315,7 +315,7 @@ export default function PicksPage() {
         <div key={week}>
 
           <h2 className="text-lg font-semibold text-zinc-400 mb-4">
-            Week {week}
+            Matchweek {week}
           </h2>
 
           <div className="space-y-6 mb-10">

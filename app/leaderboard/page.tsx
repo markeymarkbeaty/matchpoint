@@ -25,6 +25,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     async function load() {
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -41,91 +42,124 @@ export default function LeaderboardPage() {
     load()
   }, [])
 
+  function medal(rank: number) {
+    if (rank === 0) return '🥇'
+    if (rank === 1) return '🥈'
+    if (rank === 2) return '🥉'
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-black text-white px-5 pt-14 pb-32">
+
       <h1 className="text-3xl font-semibold tracking-tight mb-10">
-        Leaderboard
+        Global Leaderboard
       </h1>
 
       {loading && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-zinc-400">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
           Loading...
         </div>
       )}
 
       {!loading && leaders.length === 0 && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 text-zinc-400">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
           No players yet.
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4">
+
         {leaders.map((leader, index) => {
+
           const units = Number(leader.total_units || 0)
           const totalBets = leader.wins + leader.losses
-          const winRate =
-            totalBets > 0 ? Math.round((leader.wins / totalBets) * 100) : 0
 
-          const isFirst = index === 0
-          const isCurrentUser = leader.user_id === currentUserId
+          const winRate =
+            totalBets > 0
+              ? Math.round((leader.wins / totalBets) * 100)
+              : 0
+
+          const isCurrentUser =
+            leader.user_id === currentUserId
 
           const unitsColor =
             units > 0
               ? 'text-green-400'
               : units < 0
-              ? 'text-red-400'
-              : 'text-white'
+                ? 'text-red-400'
+                : 'text-white'
+
+          const medalIcon = medal(index)
 
           return (
+
             <motion.div
               key={leader.user_id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className={`
-                rounded-3xl p-6 border
-                ${isFirst ? 'border-yellow-500 shadow-lg shadow-yellow-500/10' : 'border-zinc-800'}
-                ${isCurrentUser ? 'bg-zinc-800' : 'bg-zinc-900'}
+                rounded-2xl p-6 border transition
+                hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.25)]
+                ${isCurrentUser ? 'bg-zinc-800 border-green-500' : 'bg-zinc-900 border-zinc-800'}
               `}
             >
+
               <div className="flex justify-between items-center">
+
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">
+
+                  <p className="text-xs text-zinc-500 mb-1">
                     Rank #{index + 1}
-                    {isFirst && ' 🏆'}
                   </p>
 
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-semibold flex items-center gap-2">
+
+                    {medalIcon && (
+                      <span className="text-xl">
+                        {medalIcon}
+                      </span>
+                    )}
+
                     {leader.username}
+
                     {isCurrentUser && (
-                      <span className="ml-2 text-xs text-green-400">
+                      <span className="text-xs text-green-400 ml-2">
                         (You)
                       </span>
                     )}
+
                   </p>
+
                 </div>
 
                 <div className="text-right">
+
                   <p className={`text-xl font-semibold ${unitsColor}`}>
                     {units > 0 ? '+' : ''}
                     {units.toFixed(1)}
                   </p>
 
                   <p className="text-xs text-zinc-500 mt-1">
-                    {totalBets} Bets
+                    {totalBets} Picks
                   </p>
 
                   <p className="text-xs text-zinc-500">
                     {winRate}% Win Rate
                   </p>
+
                 </div>
+
               </div>
+
             </motion.div>
           )
         })}
       </div>
 
       <BottomNav />
+
     </div>
   )
 }
