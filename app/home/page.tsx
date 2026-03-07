@@ -6,21 +6,30 @@ import { useRouter } from 'next/navigation'
 import BottomNav from '../../components/BottomNav'
 
 export default function HomePage() {
+
   const router = useRouter()
 
   useEffect(() => {
+
     const checkUser = async () => {
+
       const { data } = await supabase.auth.getUser()
 
       if (!data.user) {
         router.push('/auth')
       }
+
     }
 
     checkUser()
+
   }, [router])
 
+  const buttonStyle =
+    "w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 transition hover:border-green-400 hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+
   return (
+
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
       <h1 className="text-3xl font-semibold mb-10">
@@ -39,28 +48,28 @@ export default function HomePage() {
 
           <button
             onClick={() => router.push('/favorite-teams')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Favorite Teams
           </button>
 
           <button
             onClick={() => router.push('/standings')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Standings
           </button>
 
           <button
             onClick={() => router.push('/matches')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Matches
           </button>
 
           <button
             onClick={() => router.push('/schedule')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Schedule
           </button>
@@ -81,21 +90,21 @@ export default function HomePage() {
 
           <button
             onClick={() => router.push('/friends')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             My Friends
           </button>
 
           <button
             onClick={() => router.push('/leagues')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             My Leagues
           </button>
 
           <button
             onClick={() => router.push('/invite')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Invite Friends
           </button>
@@ -116,21 +125,21 @@ export default function HomePage() {
 
           <button
             onClick={() => router.push('/notifications')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Notification Settings
           </button>
 
           <button
             onClick={() => router.push('/username')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Update Username
           </button>
 
           <button
             onClick={() => router.push('/reset-password')}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+            className={buttonStyle}
           >
             Reset Password
           </button>
@@ -149,7 +158,7 @@ export default function HomePage() {
 
         <button
           onClick={() => router.push('/feedback')}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3"
+          className={buttonStyle}
         >
           Send Feedback
         </button>
@@ -176,5 +185,7 @@ export default function HomePage() {
       <BottomNav />
 
     </div>
+
   )
+
 }
