@@ -68,11 +68,14 @@ export default function DevProgressPage() {
                         Long Term Vision
                     </h2>
 
-                    <p className="text-zinc-400">
-                        MatchPoint will evolve into a behavioral finance platform through
-                        gamified investing, where correct picks invest funds into ETFs or
-                        high-yield savings accounts while incorrect picks return principal.
-                    </p>
+                    <ul className="text-zinc-400 space-y-1">
+                        <li>• Competitive NWSL prediction platform</li>
+                        <li>• Social competition between friends and leagues</li>
+                        <li>• Optional gamified investing layer added later</li>
+                        <li>• Correct picks automatically invest funds into ETFs or a high-yield savings account</li>
+                        <li>• Incorrect picks return the original principal</li>
+                        <li>• Encourages disciplined saving and investing rather than gambling</li>
+                    </ul>
                 </div>
 
             </div>
