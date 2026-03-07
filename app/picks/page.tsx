@@ -168,14 +168,11 @@ export default function PicksPage() {
 
     return (
 
-      <div
-        key={id}
-        className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
-      >
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
 
         <div className="text-center mb-5">
 
-          <div className="text-sm text-zinc-400">
+          <div className="text-lg italic font-semibold text-zinc-300">
             {formatDate(date)}
           </div>
 
@@ -285,30 +282,6 @@ export default function PicksPage() {
       <h1 className="text-3xl font-semibold mb-6">
         Picks
       </h1>
-
-      <div className="flex mb-6 border-b border-zinc-800">
-
-        <button
-          onClick={() => setTab('upcoming')}
-          className={`flex-1 pb-3 ${tab === 'upcoming'
-              ? 'border-b-2 border-green-400 text-green-400'
-              : 'text-zinc-500'
-            }`}
-        >
-          Upcoming
-        </button>
-
-        <button
-          onClick={() => setTab('past')}
-          className={`flex-1 pb-3 ${tab === 'past'
-              ? 'border-b-2 border-green-400 text-green-400'
-              : 'text-zinc-500'
-            }`}
-        >
-          Past
-        </button>
-
-      </div>
 
       {Object.keys(groupedMatches).map((week) => (
 
