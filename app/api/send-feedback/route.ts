@@ -12,7 +12,6 @@ export async function POST(req: Request) {
         console.log("Request data:", { message, user_id })
 
         const apiKey = process.env.RESEND_API_KEY
-
         console.log("API key exists:", !!apiKey)
 
         const resend = new Resend(apiKey)
