@@ -20,49 +20,34 @@ export default function LeaguesPage() {
 
   async function loadLeagues() {
 
-    const { data: userData } = await supabase.auth.getUser()
-    const user = userData.user
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return
 
-    const { data: membership } = await supabase
+    const { data, error } = await supabase
       .from('league_members')
-      .select('league_id')
+      .select(`
+        league_id,
+        leagues (
+          id,
+          name,
+          owner_id,
+          profiles (
+            username
+          )
+        )
+      `)
       .eq('user_id', user.id)
 
-    if (!membership || membership.length === 0) {
+    if (error || !data) {
       setLeagues([])
       return
     }
 
-    const leagueIds = membership.map(m => m.league_id)
-
-    const { data: leaguesData } = await supabase
-      .from('leagues')
-      .select('*')
-      .in('id', leagueIds)
-
-    if (!leaguesData) {
-      setLeagues([])
-      return
-    }
-
-    const ownerIds = leaguesData.map(l => l.owner_id)
-
-    const { data: owners } = await supabase
-      .from('profiles')
-      .select('id, username')
-      .in('id', ownerIds)
-
-    const ownerMap: any = {}
-
-    owners?.forEach(o => {
-      ownerMap[o.id] = o.username
-    })
-
-    const formatted = leaguesData.map(l => ({
-      ...l,
-      owner_name: ownerMap[l.owner_id] || 'User'
+    const formatted = data.map((row: any) => ({
+      id: row.leagues.id,
+      name: row.leagues.name,
+      owner_name: row.leagues.profiles?.username || 'User'
     }))
 
     setLeagues(formatted)
@@ -70,12 +55,13 @@ export default function LeaguesPage() {
 
   async function createLeague() {
 
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
+    setMessage('')
+
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user || !leagueName) return
 
-    const { data: league } = await supabase
+    const { data: league, error } = await supabase
       .from('leagues')
       .insert({
         name: leagueName,
@@ -84,22 +70,25 @@ export default function LeaguesPage() {
       .select()
       .single()
 
-    if (league) {
-
-      await supabase.from('league_members').insert({
-        league_id: league.id,
-        user_id: user.id
-      })
-
-      setLeagueName('')
-      loadLeagues()
+    if (error || !league) {
+      setMessage('Could not create league')
+      return
     }
+
+    await supabase.from('league_members').insert({
+      league_id: league.id,
+      user_id: user.id
+    })
+
+    setLeagueName('')
+    loadLeagues()
   }
 
   async function joinLeague() {
 
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
+    setMessage('')
+
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user || !joinCode) return
 
@@ -114,10 +103,17 @@ export default function LeaguesPage() {
       return
     }
 
-    await supabase.from('league_members').insert({
-      league_id: invite.league_id,
-      user_id: user.id
-    })
+    const { error } = await supabase
+      .from('league_members')
+      .insert({
+        league_id: invite.league_id,
+        user_id: user.id
+      })
+
+    if (error) {
+      setMessage('You are already in this league')
+      return
+    }
 
     setJoinCode('')
     loadLeagues()
@@ -171,7 +167,13 @@ export default function LeaguesPage() {
 
       </div>
 
-      {/* LIST */}
+      {message && (
+        <div className="text-center text-sm text-red-400 mb-6">
+          {message}
+        </div>
+      )}
+
+      {/* LEAGUE LIST */}
 
       <div className="space-y-4">
 
@@ -200,6 +202,5 @@ export default function LeaguesPage() {
       <BottomNav />
 
     </div>
-
   )
 }
