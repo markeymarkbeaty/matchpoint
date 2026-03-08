@@ -120,7 +120,12 @@ export default function LeaguesPage() {
                     <div
                         key={league.id}
                         onClick={() => router.push(`/leagues/${league.id}`)}
-                        className="rounded-2xl p-6 border bg-zinc-900 border-zinc-800 cursor-pointer hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.4)] transition"
+                        className="
+            rounded-2xl p-6 border bg-zinc-900 border-zinc-800 cursor-pointer
+            hover:border-green-400
+            hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+            transition
+            "
                     >
 
                         <div className="text-lg font-semibold">
@@ -146,7 +151,12 @@ export default function LeaguesPage() {
 
                 <button
                     onClick={createLeague}
-                    className="w-full py-3 rounded-xl border border-green-400 text-green-300 hover:shadow-[0_0_14px_rgba(74,222,128,0.5)] transition"
+                    className="
+          w-full py-3 rounded-xl border border-green-500 text-green-400
+          transition duration-200
+          hover:border-green-400
+          hover:shadow-[0_0_16px_rgba(74,222,128,0.6)]
+          "
                 >
                     Create League
                 </button>
@@ -166,7 +176,12 @@ export default function LeaguesPage() {
 
                 <button
                     onClick={joinLeague}
-                    className="w-full py-3 rounded-xl border border-green-400 text-green-300 hover:shadow-[0_0_14px_rgba(74,222,128,0.5)] transition"
+                    className="
+          w-full py-3 rounded-xl border border-green-500 text-green-400
+          transition duration-200
+          hover:border-green-400
+          hover:shadow-[0_0_16px_rgba(74,222,128,0.6)]
+          "
                 >
                     Join League
                 </button>
@@ -176,5 +191,6 @@ export default function LeaguesPage() {
             <BottomNav />
 
         </div>
+
     )
 }
