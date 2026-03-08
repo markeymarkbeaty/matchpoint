@@ -20,36 +20,32 @@ export default function LeaguesPage() {
 
   async function loadLeagues() {
 
-    setLoading(true)
-
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
-    const { data, error } = await supabase
+    const { data: memberships } = await supabase
       .from('league_members')
-      .select(`
-        league_id,
-        leagues (
-          id,
-          name,
-          owner_id
-        )
-      `)
+      .select('league_id')
       .eq('user_id', user.id)
 
-    if (error || !data) {
+    if (!memberships || memberships.length === 0) {
       setLeagues([])
       setLoading(false)
       return
     }
 
-    const formatted = data.map((row: any) => ({
-      id: row.leagues.id,
-      name: row.leagues.name
-    }))
+    const leagueIds = memberships.map(m => m.league_id)
 
-    setLeagues(formatted)
+    const { data: leaguesData } = await supabase
+      .from('leagues')
+      .select('*')
+      .in('id', leagueIds)
+
+    setLeagues(leaguesData || [])
     setLoading(false)
   }
 
@@ -75,8 +71,7 @@ export default function LeaguesPage() {
       user_id: user.id
     })
 
-    setLeagueName('')
-    loadLeagues()
+    router.push(`/leagues/${league.id}`)
   }
 
   async function joinLeague() {
@@ -98,8 +93,7 @@ export default function LeaguesPage() {
       user_id: user.id
     })
 
-    setJoinCode('')
-    loadLeagues()
+    router.push(`/leagues/${invite.league_id}`)
   }
 
   return (
@@ -123,7 +117,7 @@ export default function LeaguesPage() {
 
         <button
           onClick={createLeague}
-          className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
+          className="w-full py-3 rounded-xl border border-green-400 text-green-300 hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.4)] transition"
         >
           Create League
         </button>
@@ -143,7 +137,7 @@ export default function LeaguesPage() {
 
         <button
           onClick={joinLeague}
-          className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
+          className="w-full py-3 rounded-xl border border-green-400 text-green-300 hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.4)] transition"
         >
           Join League
         </button>
@@ -163,10 +157,10 @@ export default function LeaguesPage() {
           <div
             key={league.id}
             onClick={() => router.push(`/leagues/${league.id}`)}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.6)] transition"
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 cursor-pointer hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.4)] transition"
           >
 
-            <div className="font-semibold">
+            <div className="font-semibold text-lg">
               {league.name}
             </div>
 
