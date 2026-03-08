@@ -12,13 +12,15 @@ export default function LeaguesPage() {
   const [leagues, setLeagues] = useState<any[]>([])
   const [leagueName, setLeagueName] = useState('')
   const [joinCode, setJoinCode] = useState('')
-  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadLeagues()
   }, [])
 
   async function loadLeagues() {
+
+    setLoading(true)
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -31,37 +33,33 @@ export default function LeaguesPage() {
         leagues (
           id,
           name,
-          owner_id,
-          profiles (
-            username
-          )
+          owner_id
         )
       `)
       .eq('user_id', user.id)
 
     if (error || !data) {
       setLeagues([])
+      setLoading(false)
       return
     }
 
     const formatted = data.map((row: any) => ({
       id: row.leagues.id,
-      name: row.leagues.name,
-      owner_name: row.leagues.profiles?.username || 'User'
+      name: row.leagues.name
     }))
 
     setLeagues(formatted)
+    setLoading(false)
   }
 
   async function createLeague() {
-
-    setMessage('')
 
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user || !leagueName) return
 
-    const { data: league, error } = await supabase
+    const { data: league } = await supabase
       .from('leagues')
       .insert({
         name: leagueName,
@@ -70,10 +68,7 @@ export default function LeaguesPage() {
       .select()
       .single()
 
-    if (error || !league) {
-      setMessage('Could not create league')
-      return
-    }
+    if (!league) return
 
     await supabase.from('league_members').insert({
       league_id: league.id,
@@ -86,8 +81,6 @@ export default function LeaguesPage() {
 
   async function joinLeague() {
 
-    setMessage('')
-
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user || !joinCode) return
@@ -98,22 +91,12 @@ export default function LeaguesPage() {
       .eq('invite_code', joinCode)
       .single()
 
-    if (!invite) {
-      setMessage('Invalid invite code')
-      return
-    }
+    if (!invite) return
 
-    const { error } = await supabase
-      .from('league_members')
-      .insert({
-        league_id: invite.league_id,
-        user_id: user.id
-      })
-
-    if (error) {
-      setMessage('You are already in this league')
-      return
-    }
+    await supabase.from('league_members').insert({
+      league_id: invite.league_id,
+      user_id: user.id
+    })
 
     setJoinCode('')
     loadLeagues()
@@ -123,7 +106,7 @@ export default function LeaguesPage() {
 
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold mb-8">
+      <h1 className="text-3xl font-semibold mb-10">
         My Leagues
       </h1>
 
@@ -167,13 +150,11 @@ export default function LeaguesPage() {
 
       </div>
 
-      {message && (
-        <div className="text-center text-sm text-red-400 mb-6">
-          {message}
-        </div>
-      )}
-
       {/* LEAGUE LIST */}
+
+      {loading && (
+        <div className="text-zinc-400">Loading...</div>
+      )}
 
       <div className="space-y-4">
 
@@ -189,10 +170,6 @@ export default function LeaguesPage() {
               {league.name}
             </div>
 
-            <div className="text-sm text-zinc-500">
-              Created by {league.owner_name}
-            </div>
-
           </div>
 
         ))}
@@ -202,5 +179,6 @@ export default function LeaguesPage() {
       <BottomNav />
 
     </div>
+
   )
 }

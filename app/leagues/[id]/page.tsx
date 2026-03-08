@@ -37,8 +37,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
       `)
       .eq('league_id', params.id)
 
-    if (!memberData || memberData.length === 0) {
-      setMembers([])
+    if (!memberData) {
       setLoading(false)
       return
     }
@@ -116,79 +115,60 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold tracking-tight mb-10">
-        {league ? `${league.name}` : 'League'}
+      <h1 className="text-3xl font-semibold mb-10">
+        {league?.name || 'League'}
       </h1>
 
-      {/* LOADING */}
-
       {loading && (
-
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
-          Loading league...
-        </div>
-
+        <div className="text-zinc-400">Loading league...</div>
       )}
 
-      {/* LEADERBOARD */}
+      <div className="space-y-4 mb-10">
 
-      {!loading && (
+        {members.map((member, index) => (
 
-        <div className="space-y-4 mb-10">
+          <div
+            key={index}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.25)] transition"
+          >
 
-          {members.map((member, index) => (
+            <div className="flex justify-between">
 
-            <div
-              key={index}
-              className="
-              rounded-2xl p-6 border transition
-              bg-zinc-900 border-zinc-800
-              hover:border-green-400
-              hover:shadow-[0_0_14px_rgba(74,222,128,0.25)]
-              "
-            >
+              <div className="flex items-center gap-3">
 
-              <div className="flex justify-between items-center">
+                <span className="text-xl">
+                  {medal(index)}
+                </span>
 
-                <div className="flex items-center gap-3">
+                <span className="font-semibold">
+                  {member.username}
+                </span>
 
-                  <span className="text-xl">
-                    {medal(index)}
-                  </span>
+              </div>
 
-                  <span className="font-semibold">
-                    {member.username}
-                  </span>
+              <div className="text-right">
 
+                <div className="text-green-400 font-semibold">
+                  {member.wins} Wins
                 </div>
 
-                <div className="text-right">
-
-                  <p className="text-green-400 font-semibold">
-                    {member.wins} Wins
-                  </p>
-
-                  <p className="text-xs text-zinc-500">
-                    {member.accuracy}% Accuracy
-                  </p>
-
+                <div className="text-xs text-zinc-500">
+                  {member.accuracy}% Accuracy
                 </div>
 
               </div>
 
             </div>
 
-          ))}
+          </div>
 
-        </div>
+        ))}
 
-      )}
-
-      {/* LEAVE BUTTON */}
+      </div>
 
       <button
         onClick={leaveLeague}
-        className="w-full py-3 rounded-xl border border-red-500 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.6)] hover:shadow-[0_0_14px_rgba(239,68,68,0.8)] transition"
+        className="w-full py-3 rounded-xl border border-red-500 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.6)]"
       >
         Leave League
       </button>
