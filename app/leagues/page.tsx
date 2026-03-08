@@ -152,9 +152,10 @@ export default function LeaguesPage() {
                 <button
                     onClick={createLeague}
                     className="
-          w-full py-3 rounded-xl border border-green-500 text-green-400
+          w-full py-3 rounded-xl border border-zinc-700 text-white
           transition duration-200
           hover:border-green-400
+          hover:text-green-400
           hover:shadow-[0_0_16px_rgba(74,222,128,0.6)]
           "
                 >
@@ -177,9 +178,10 @@ export default function LeaguesPage() {
                 <button
                     onClick={joinLeague}
                     className="
-          w-full py-3 rounded-xl border border-green-500 text-green-400
+          w-full py-3 rounded-xl border border-zinc-700 text-white
           transition duration-200
           hover:border-green-400
+          hover:text-green-400
           hover:shadow-[0_0_16px_rgba(74,222,128,0.6)]
           "
                 >
@@ -191,6 +193,5 @@ export default function LeaguesPage() {
             <BottomNav />
 
         </div>
-
     )
 }
