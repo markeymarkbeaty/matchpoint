@@ -9,7 +9,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
   const router = useRouter()
 
-  const [league, setLeague] = useState<any>(null)
+  const [leagueName, setLeagueName] = useState('')
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -21,29 +21,43 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
     setLoading(true)
 
-    const { data: leagueData } = await supabase
+    // get league info
+    const { data: league } = await supabase
       .from('leagues')
-      .select('*')
+      .select('name')
       .eq('id', params.id)
       .single()
 
-    setLeague(leagueData)
+    if (league) {
+      setLeagueName(league.name)
+    }
 
-    const { data: memberData } = await supabase
+    // get members
+    const { data: memberRows } = await supabase
       .from('league_members')
-      .select(`
-        user_id,
-        profiles(username)
-      `)
+      .select('user_id')
       .eq('league_id', params.id)
 
-    if (!memberData) {
+    if (!memberRows || memberRows.length === 0) {
+      setMembers([])
       setLoading(false)
       return
     }
 
-    const userIds = memberData.map(m => m.user_id)
+    const userIds = memberRows.map(m => m.user_id)
 
+    // get usernames
+    const { data: users } = await supabase
+      .from('profiles')
+      .select('id,username')
+      .in('id', userIds)
+
+    const userMap: any = {}
+    users?.forEach(u => {
+      userMap[u.id] = u.username
+    })
+
+    // get picks
     const { data: picks } = await supabase
       .from('picks')
       .select('user_id,is_correct')
@@ -51,21 +65,21 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
     const stats: any = {}
 
-    picks?.forEach(pick => {
+    picks?.forEach(p => {
 
-      if (!stats[pick.user_id]) {
-        stats[pick.user_id] = { wins: 0, total: 0 }
+      if (!stats[p.user_id]) {
+        stats[p.user_id] = { wins: 0, total: 0 }
       }
 
-      stats[pick.user_id].total++
+      stats[p.user_id].total++
 
-      if (pick.is_correct) stats[pick.user_id].wins++
+      if (p.is_correct) stats[p.user_id].wins++
 
     })
 
-    const leaderboard = memberData.map((member: any) => {
+    const leaderboard = userIds.map(id => {
 
-      const s = stats[member.user_id] || { wins: 0, total: 0 }
+      const s = stats[id] || { wins: 0, total: 0 }
 
       const accuracy =
         s.total > 0
@@ -73,7 +87,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
           : 0
 
       return {
-        username: member.profiles?.username || 'User',
+        username: userMap[id] || 'User',
         wins: s.wins,
         accuracy
       }
@@ -88,8 +102,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
   async function leaveLeague() {
 
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return
 
@@ -116,7 +129,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
       <h1 className="text-3xl font-semibold mb-10">
-        {league?.name || 'League'}
+        {leagueName || 'League'}
       </h1>
 
       {loading && (
@@ -129,7 +142,7 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
 
           <div
             key={index}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.25)] transition"
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.4)] transition"
           >
 
             <div className="flex justify-between">
@@ -176,6 +189,5 @@ export default function LeaguePage({ params }: { params: { id: string } }) {
       <BottomNav />
 
     </div>
-
   )
 }
