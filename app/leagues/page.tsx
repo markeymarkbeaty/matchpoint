@@ -24,25 +24,42 @@ export default function LeaguesPage() {
 
         if (!user) return
 
+        // leagues you own
+        const { data: owned } = await supabase
+            .from('leagues')
+            .select('*')
+            .eq('owner_id', user.id)
+
+        // leagues you joined
         const { data: memberships } = await supabase
             .from('league_members')
             .select('league_id')
             .eq('user_id', user.id)
 
-        if (!memberships || memberships.length === 0) {
-            setLeagues([])
-            setLoading(false)
-            return
+        let joined: any[] = []
+
+        if (memberships && memberships.length > 0) {
+
+            const ids = memberships.map(m => m.league_id)
+
+            const { data: joinedLeagues } = await supabase
+                .from('leagues')
+                .select('*')
+                .in('id', ids)
+
+            joined = joinedLeagues || []
         }
 
-        const leagueIds = memberships.map(m => m.league_id)
+        const combined = [...(owned || []), ...joined]
 
-        const { data: leagueRows } = await supabase
-            .from('leagues')
-            .select('*')
-            .in('id', leagueIds)
+        const unique = Object.values(
+            combined.reduce((acc: any, league: any) => {
+                acc[league.id] = league
+                return acc
+            }, {})
+        )
 
-        setLeagues(leagueRows || [])
+        setLeagues(unique)
         setLoading(false)
     }
 
@@ -105,10 +122,8 @@ export default function LeaguesPage() {
                 My Leagues
             </h1>
 
-            {/* LEAGUE LIST */}
-
             {loading && (
-                <div className="text-zinc-400 mb-10">
+                <div className="text-zinc-400 mb-8">
                     Loading leagues...
                 </div>
             )}
@@ -138,7 +153,7 @@ export default function LeaguesPage() {
 
             </div>
 
-            {/* CREATE LEAGUE */}
+            {/* CREATE */}
 
             <div className="mb-10">
 
@@ -153,10 +168,9 @@ export default function LeaguesPage() {
                     onClick={createLeague}
                     className="
           w-full py-3 rounded-xl border border-zinc-700 text-white
-          transition duration-200
-          hover:border-green-400
-          hover:text-green-400
+          hover:border-green-400 hover:text-green-400
           hover:shadow-[0_0_16px_rgba(74,222,128,0.6)]
+          transition
           "
                 >
                     Create League
@@ -164,7 +178,7 @@ export default function LeaguesPage() {
 
             </div>
 
-            {/* JOIN LEAGUE */}
+            {/* JOIN */}
 
             <div className="mb-12">
 
@@ -179,10 +193,9 @@ export default function LeaguesPage() {
                     onClick={joinLeague}
                     className="
           w-full py-3 rounded-xl border border-zinc-700 text-white
-          transition duration-200
-          hover:border-green-400
-          hover:text-green-400
+          hover:border-green-400 hover:text-green-400
           hover:shadow-[0_0_16px_rgba(74,222,128,0.6)]
+          transition
           "
                 >
                     Join League
@@ -193,5 +206,6 @@ export default function LeaguesPage() {
             <BottomNav />
 
         </div>
+
     )
 }
