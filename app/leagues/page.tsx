@@ -15,51 +15,45 @@ export default function LeaguesPage() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        loadLeagues()
+
+        async function init() {
+
+            const { data: { session } } = await supabase.auth.getSession()
+
+            if (!session) {
+                setLoading(false)
+                return
+            }
+
+            loadLeagues(session.user.id)
+
+        }
+
+        init()
+
     }, [])
 
-    async function loadLeagues() {
+    async function loadLeagues(userId: string) {
 
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) return
-
-        // leagues you own
-        const { data: owned } = await supabase
-            .from('leagues')
-            .select('*')
-            .eq('owner_id', user.id)
-
-        // leagues you joined
         const { data: memberships } = await supabase
             .from('league_members')
             .select('league_id')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
 
-        let joined: any[] = []
-
-        if (memberships && memberships.length > 0) {
-
-            const ids = memberships.map(m => m.league_id)
-
-            const { data: joinedLeagues } = await supabase
-                .from('leagues')
-                .select('*')
-                .in('id', ids)
-
-            joined = joinedLeagues || []
+        if (!memberships || memberships.length === 0) {
+            setLeagues([])
+            setLoading(false)
+            return
         }
 
-        const combined = [...(owned || []), ...joined]
+        const leagueIds = memberships.map(m => m.league_id)
 
-        const unique = Object.values(
-            combined.reduce((acc: any, league: any) => {
-                acc[league.id] = league
-                return acc
-            }, {})
-        )
+        const { data: leagueRows } = await supabase
+            .from('leagues')
+            .select('*')
+            .in('id', leagueIds)
 
-        setLeagues(unique)
+        setLeagues(leagueRows || [])
         setLoading(false)
     }
 
