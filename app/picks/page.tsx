@@ -76,6 +76,25 @@ export default function PicksPage() {
 
     if (!user) return
 
+    const current = investments[matchId]
+
+    // deselect if clicking same amount
+    if (current === amount) {
+
+      await supabase
+        .from('prediction_investments')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('match_id', matchId)
+
+      const updated = { ...investments }
+      delete updated[matchId]
+
+      setInvestments(updated)
+
+      return
+    }
+
     await supabase
       .from('prediction_investments')
       .upsert({
@@ -317,7 +336,7 @@ export default function PicksPage() {
 
         {userPick && !locked && (
 
-          <div className="mt-2">
+          <div>
 
             <div className="text-xs text-zinc-500 mb-2 text-center">
               Optional Investment
