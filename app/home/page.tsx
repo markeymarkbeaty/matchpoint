@@ -36,48 +36,6 @@ export default function HomePage() {
         MatchPoint
       </h1>
 
-      {/* SPORTS */}
-
-      <div className="mb-10">
-
-        <h2 className="text-sm uppercase text-zinc-500 mb-4">
-          Sports
-        </h2>
-
-        <div className="space-y-3">
-
-          <button
-            onClick={() => router.push('/favorite-teams')}
-            className={buttonStyle}
-          >
-            Favorite Teams
-          </button>
-
-          <button
-            onClick={() => router.push('/standings')}
-            className={buttonStyle}
-          >
-            Standings
-          </button>
-
-          <button
-            onClick={() => router.push('/matches')}
-            className={buttonStyle}
-          >
-            Matches
-          </button>
-
-          <button
-            onClick={() => router.push('/schedule')}
-            className={buttonStyle}
-          >
-            Schedule
-          </button>
-
-        </div>
-
-      </div>
-
       {/* SOCIAL */}
 
       <div className="mb-10">
@@ -107,6 +65,41 @@ export default function HomePage() {
             className={buttonStyle}
           >
             Invite Friends
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* SPORTS */}
+
+      <div className="mb-10">
+
+        <h2 className="text-sm uppercase text-zinc-500 mb-4">
+          Sports
+        </h2>
+
+        <div className="space-y-3">
+
+          <button
+            onClick={() => router.push('/favorite-teams')}
+            className={buttonStyle}
+          >
+            🤍 Teams
+          </button>
+
+          <button
+            onClick={() => router.push('/standings')}
+            className={buttonStyle}
+          >
+            Standings
+          </button>
+
+          <button
+            onClick={() => router.push('/matches')}
+            className={buttonStyle}
+          >
+            Matches
           </button>
 
         </div>
