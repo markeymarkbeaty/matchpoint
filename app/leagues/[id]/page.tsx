@@ -18,6 +18,7 @@ export default function LeaguePage() {
 
     const [inviteCode, setInviteCode] = useState<string | null>(null)
     const [creatingInvite, setCreatingInvite] = useState(false)
+    const [showInvite, setShowInvite] = useState(false)
 
     useEffect(() => {
         loadLeague()
@@ -242,7 +243,7 @@ export default function LeaguePage() {
 
             </div>
 
-            {/* INVITE SECTION MOVED TO BOTTOM */}
+            {/* INVITE SECTION */}
 
             <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
 
@@ -250,11 +251,10 @@ export default function LeaguePage() {
                     Invite Friends
                 </h2>
 
-                {!inviteCode && (
+                {!showInvite && (
 
                     <button
-                        onClick={createInvite}
-                        disabled={creatingInvite}
+                        onClick={() => setShowInvite(true)}
                         className="
                         w-full py-3 rounded-xl border border-zinc-700
                         hover:border-green-400
@@ -262,38 +262,60 @@ export default function LeaguePage() {
                         transition
                         "
                     >
-                        Generate Invite Code
+                        Show Invite Code
                     </button>
 
                 )}
 
-                {inviteCode && (
+                {showInvite && (
 
                     <div className="space-y-4">
 
-                        <div className="text-center">
+                        {!inviteCode && (
 
-                            <div className="text-zinc-400 text-sm mb-1">
-                                Invite Code
-                            </div>
+                            <button
+                                onClick={createInvite}
+                                disabled={creatingInvite}
+                                className="
+                                w-full py-3 rounded-xl border border-zinc-700
+                                hover:border-green-400
+                                hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                                transition
+                                "
+                            >
+                                Generate Invite Code
+                            </button>
 
-                            <div className="text-2xl font-semibold tracking-widest">
-                                {inviteCode}
-                            </div>
+                        )}
 
-                        </div>
+                        {inviteCode && (
 
-                        <button
-                            onClick={copyCode}
-                            className="
-                            w-full py-3 rounded-xl border border-zinc-700
-                            hover:border-green-400
-                            hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
-                            transition
-                            "
-                        >
-                            Copy Invite Code
-                        </button>
+                            <>
+                                <div className="text-center">
+
+                                    <div className="text-zinc-400 text-sm mb-1">
+                                        Invite Code
+                                    </div>
+
+                                    <div className="text-2xl font-semibold tracking-widest">
+                                        {inviteCode}
+                                    </div>
+
+                                </div>
+
+                                <button
+                                    onClick={copyCode}
+                                    className="
+                                    w-full py-3 rounded-xl border border-zinc-700
+                                    hover:border-green-400
+                                    hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                                    transition
+                                    "
+                                >
+                                    Copy Invite Code
+                                </button>
+                            </>
+                        )}
 
                     </div>
 
