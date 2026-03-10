@@ -47,17 +47,17 @@ export default function HomePage() {
         <div className="space-y-3">
 
           <button
-            onClick={() => router.push('/friends')}
-            className={buttonStyle}
-          >
-            My Friends
-          </button>
-
-          <button
             onClick={() => router.push('/leagues')}
             className={buttonStyle}
           >
             My Leagues
+          </button>
+
+          <button
+            onClick={() => router.push('/friends')}
+            className={buttonStyle}
+          >
+            My Friends
           </button>
 
           <button
@@ -178,10 +178,10 @@ export default function HomePage() {
         </h2>
 
         <button
-          disabled
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 text-zinc-500"
+          onClick={() => router.push('/invest')}
+          className={buttonStyle}
         >
-          Investing (Coming Soon)
+          Investing
         </button>
 
       </div>
