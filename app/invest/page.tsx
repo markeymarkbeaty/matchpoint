@@ -10,24 +10,41 @@ export default function InvestPage() {
     const [loading, setLoading] = useState(true)
     const [joining, setJoining] = useState(false)
 
+    const [available, setAvailable] = useState(0)
+    const [invested, setInvested] = useState(0)
+
+    const [investmentType, setInvestmentType] = useState('HYSA')
+
+    const [activeBets, setActiveBets] = useState<any[]>([])
+
     useEffect(() => {
-        checkAccount()
+        initialize()
     }, [])
 
-    async function checkAccount() {
+    async function initialize() {
 
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) return
 
-        const { data } = await supabase
+        const { data: account } = await supabase
             .from('user_investment_accounts')
             .select('*')
             .eq('user_id', user.id)
             .maybeSingle()
 
-        if (data) {
+        if (account) {
+
             setJoined(true)
+
+            setAvailable(account.balance_available)
+            setInvested(account.balance_invested)
+
+            if (account.account_type) {
+                setInvestmentType(account.account_type)
+            }
+
+            loadActiveBets(user.id)
         }
 
         setLoading(false)
@@ -46,14 +63,41 @@ export default function InvestPage() {
             .insert({
                 user_id: user.id,
                 balance_available: 100,
-                balance_invested: 0
+                balance_invested: 0,
+                account_type: 'HYSA'
             })
 
         if (!error) {
             setJoined(true)
+            setAvailable(100)
         }
 
         setJoining(false)
+    }
+
+    async function loadActiveBets(userId: string) {
+
+        const { data } = await supabase
+            .from('prediction_investments')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'pending')
+
+        if (data) setActiveBets(data)
+    }
+
+    async function changeInvestmentType(type: string) {
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) return
+
+        await supabase
+            .from('user_investment_accounts')
+            .update({ account_type: type })
+            .eq('user_id', user.id)
+
+        setInvestmentType(type)
     }
 
     if (loading) {
@@ -81,17 +125,16 @@ export default function InvestPage() {
                     </h2>
 
                     <p className="text-zinc-400">
-                        MatchPoint Investing allows you to allocate money to your predictions.
-                        When your pick is correct, the funds are invested. When your pick is
-                        incorrect, the original money is returned.
+                        Allocate money to your predictions. Correct picks invest the money.
+                        Incorrect picks return your funds. No money is lost.
                     </p>
 
-                    <ul className="text-zinc-400 space-y-1 text-sm">
+                    <ul className="text-zinc-400 text-sm space-y-1">
 
-                        <li>• Allocate money to your picks</li>
+                        <li>• Optional investing</li>
                         <li>• Correct picks invest funds</li>
-                        <li>• Incorrect picks return your money</li>
-                        <li>• No money is lost</li>
+                        <li>• Incorrect picks return funds</li>
+                        <li>• Learn disciplined investing</li>
 
                     </ul>
 
@@ -114,14 +157,126 @@ export default function InvestPage() {
 
             {joined && (
 
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
+                <div className="space-y-8">
 
-                    <div className="text-green-400 font-semibold mb-2">
-                        Investing Enabled
+                    {/* ACCOUNT SUMMARY */}
+
+                    <div className="grid grid-cols-2 gap-4">
+
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+
+                            <div className="text-xs text-zinc-500 mb-1">
+                                Available Capital
+                            </div>
+
+                            <div className="text-xl font-semibold text-green-400">
+                                ${available}
+                            </div>
+
+                        </div>
+
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+
+                            <div className="text-xs text-zinc-500 mb-1">
+                                Invested Capital
+                            </div>
+
+                            <div className="text-xl font-semibold text-green-400">
+                                ${invested}
+                            </div>
+
+                        </div>
+
                     </div>
 
-                    <div className="text-zinc-400 text-sm">
-                        Your investing dashboard will appear here.
+                    {/* ACTIVE BETS */}
+
+                    <div>
+
+                        <h2 className="text-sm uppercase text-zinc-500 mb-3">
+                            Active Bets
+                        </h2>
+
+                        <div className="space-y-3">
+
+                            {activeBets.length === 0 && (
+
+                                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-zinc-400 text-sm">
+                                    No active bets.
+                                </div>
+
+                            )}
+
+                            {activeBets.map((bet, i) => (
+
+                                <div
+                                    key={i}
+                                    className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex justify-between"
+                                >
+
+                                    <div className="text-zinc-400 text-sm">
+                                        Match #{bet.match_id}
+                                    </div>
+
+                                    <div className="text-green-400 font-semibold">
+                                        ${bet.amount}
+                                    </div>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                    {/* INVESTMENT TYPE */}
+
+                    <div>
+
+                        <h2 className="text-sm uppercase text-zinc-500 mb-3">
+                            Investment Type
+                        </h2>
+
+                        <div className="grid grid-cols-2 gap-3">
+
+                            {['HYSA', 'ETF'].map((type) => {
+
+                                const selected = investmentType === type
+
+                                return (
+
+                                    <button
+                                        key={type}
+                                        onClick={() => changeInvestmentType(type)}
+                                        className={`py-3 rounded-xl border transition ${selected
+                                                ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
+                                                : 'border-zinc-700 hover:border-green-400'
+                                            }`}
+                                    >
+                                        {type}
+                                    </button>
+
+                                )
+
+                            })}
+
+                        </div>
+
+                    </div>
+
+                    {/* PERFORMANCE GRAPH PLACEHOLDER */}
+
+                    <div>
+
+                        <h2 className="text-sm uppercase text-zinc-500 mb-3">
+                            Performance
+                        </h2>
+
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center text-zinc-400 text-sm">
+                            Portfolio performance graph coming soon.
+                        </div>
+
                     </div>
 
                 </div>
