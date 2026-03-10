@@ -156,19 +156,23 @@ export default function HomePage() {
           Beta
         </h2>
 
-        <button
-          onClick={() => router.push('/dev-progress')}
-          className={buttonStyle}
-        >
-          Developer Goals & Progress
-        </button>
+        <div className="space-y-3">
 
-        <button
-          onClick={() => router.push('/feedback')}
-          className={buttonStyle}
-        >
-          Send Feedback
-        </button>
+          <button
+            onClick={() => router.push('/dev-progress')}
+            className={buttonStyle}
+          >
+            Developer Goals & Progress
+          </button>
+
+          <button
+            onClick={() => router.push('/feedback')}
+            className={buttonStyle}
+          >
+            Send Feedback
+          </button>
+
+        </div>
 
       </div>
 
