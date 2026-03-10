@@ -9,6 +9,7 @@ export default function InvestPage() {
     const [joined, setJoined] = useState(false)
     const [loading, setLoading] = useState(true)
     const [joining, setJoining] = useState(false)
+    const [leaving, setLeaving] = useState(false)
 
     const [available, setAvailable] = useState(0)
     const [invested, setInvested] = useState(0)
@@ -75,11 +76,40 @@ export default function InvestPage() {
         setJoining(false)
     }
 
+    async function leaveInvesting() {
+
+        setLeaving(true)
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) return
+
+        await supabase
+            .from('user_investment_accounts')
+            .delete()
+            .eq('user_id', user.id)
+
+        setJoined(false)
+        setAvailable(0)
+        setInvested(0)
+        setActiveBets([])
+
+        setLeaving(false)
+    }
+
     async function loadActiveBets(userId: string) {
 
         const { data } = await supabase
             .from('prediction_investments')
-            .select('*')
+            .select(`
+        id,
+        amount,
+        match_id,
+        matches (
+          home_team,
+          away_team
+        )
+      `)
             .eq('user_id', userId)
             .eq('status', 'pending')
 
@@ -130,12 +160,10 @@ export default function InvestPage() {
                     </p>
 
                     <ul className="text-zinc-400 text-sm space-y-1">
-
                         <li>• Optional investing</li>
                         <li>• Correct picks invest funds</li>
                         <li>• Incorrect picks return funds</li>
                         <li>• Learn disciplined investing</li>
-
                     </ul>
 
                     <button
@@ -215,7 +243,7 @@ export default function InvestPage() {
                                 >
 
                                     <div className="text-zinc-400 text-sm">
-                                        Match #{bet.match_id}
+                                        {bet.matches?.home_team} vs {bet.matches?.away_team}
                                     </div>
 
                                     <div className="text-green-400 font-semibold">
@@ -265,7 +293,7 @@ export default function InvestPage() {
 
                     </div>
 
-                    {/* PERFORMANCE GRAPH PLACEHOLDER */}
+                    {/* PERFORMANCE GRAPH */}
 
                     <div>
 
@@ -278,6 +306,20 @@ export default function InvestPage() {
                         </div>
 
                     </div>
+
+                    {/* OPT OUT */}
+
+                    <button
+                        onClick={leaveInvesting}
+                        disabled={leaving}
+                        className="
+            w-full py-3 rounded-xl border border-red-500 text-red-400
+            hover:shadow-[0_0_16px_rgba(239,68,68,0.6)]
+            transition
+            "
+                    >
+                        {leaving ? 'Leaving...' : 'Opt Out of Investing'}
+                    </button>
 
                 </div>
 
