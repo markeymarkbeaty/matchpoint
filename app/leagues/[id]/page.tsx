@@ -188,7 +188,61 @@ export default function LeaguePage() {
                 {leagueName || 'League'}
             </h1>
 
-            {/* INVITE SECTION */}
+            {loading && (
+                <div className="text-zinc-400 mb-8">
+                    Loading league...
+                </div>
+            )}
+
+            <div className="space-y-4 mb-12">
+
+                {members.map((member, index) => (
+
+                    <div
+                        key={index}
+                        className="
+                        rounded-2xl p-6 border bg-zinc-900 border-zinc-800
+                        hover:border-green-400
+                        hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                        transition
+                        "
+                    >
+
+                        <div className="flex justify-between items-center">
+
+                            <div className="flex items-center gap-3">
+
+                                <span className="text-xl">
+                                    {medal(index)}
+                                </span>
+
+                                <span className="font-semibold">
+                                    {member.username}
+                                </span>
+
+                            </div>
+
+                            <div className="text-right">
+
+                                <div className="text-green-400 font-semibold">
+                                    {member.wins} Wins
+                                </div>
+
+                                <div className="text-xs text-zinc-500">
+                                    {member.accuracy}% Accuracy
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                ))}
+
+            </div>
+
+            {/* INVITE SECTION MOVED TO BOTTOM */}
 
             <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
 
@@ -244,60 +298,6 @@ export default function LeaguePage() {
                     </div>
 
                 )}
-
-            </div>
-
-            {loading && (
-                <div className="text-zinc-400 mb-8">
-                    Loading league...
-                </div>
-            )}
-
-            <div className="space-y-4 mb-10">
-
-                {members.map((member, index) => (
-
-                    <div
-                        key={index}
-                        className="
-                        rounded-2xl p-6 border bg-zinc-900 border-zinc-800
-                        hover:border-green-400
-                        hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
-                        transition
-                        "
-                    >
-
-                        <div className="flex justify-between items-center">
-
-                            <div className="flex items-center gap-3">
-
-                                <span className="text-xl">
-                                    {medal(index)}
-                                </span>
-
-                                <span className="font-semibold">
-                                    {member.username}
-                                </span>
-
-                            </div>
-
-                            <div className="text-right">
-
-                                <div className="text-green-400 font-semibold">
-                                    {member.wins} Wins
-                                </div>
-
-                                <div className="text-xs text-zinc-500">
-                                    {member.accuracy}% Accuracy
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                ))}
 
             </div>
 
