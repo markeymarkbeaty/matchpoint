@@ -21,19 +21,23 @@ export default function DevProgressPage() {
 
                     <ul className="text-zinc-400 space-y-1">
                         <li>✔ Authentication system</li>
+                        <li>✔ Username profile system</li>
                         <li>✔ Picks system</li>
                         <li>✔ Pick locking</li>
                         <li>✔ Match grouping by week</li>
-                        <li>✔ Leaderboard system</li>
+                        <li>✔ Global leaderboard</li>
                         <li>✔ League creation</li>
-                        <li>✔ League invites</li>
-                        <li>✔ League membership</li>
+                        <li>✔ League membership system</li>
+                        <li>✔ League page routing</li>
+                        <li>✔ League member leaderboard foundation</li>
                         <li>✔ Feedback system</li>
                         <li>✔ Feedback email alerts</li>
                         <li>✔ Admin feedback dashboard</li>
                         <li>✔ Home navigation stabilization</li>
-                        <li>✔ Glow UI standardization</li>
-                        <li>✔ Picks hover glow restoration</li>
+                        <li>✔ Glow UI design system</li>
+                        <li>✔ Hover glow UI standardization</li>
+                        <li>✔ Picks page UI restoration</li>
+                        <li>✔ League database cleanup & stabilization</li>
                     </ul>
                 </div>
 
@@ -43,9 +47,11 @@ export default function DevProgressPage() {
                     </h2>
 
                     <ul className="text-zinc-400 space-y-1">
-                        <li>• Invite friends system</li>
-                        <li>• League leaderboard stability</li>
-                        <li>• Member display improvements</li>
+                        <li>• League member display</li>
+                        <li>• League leaderboard accuracy</li>
+                        <li>• League page UI improvements</li>
+                        <li>• Filtering leagues to only show user leagues</li>
+                        <li>• Invite friends flow</li>
                     </ul>
                 </div>
 
@@ -55,11 +61,14 @@ export default function DevProgressPage() {
                     </h2>
 
                     <ul className="text-zinc-400 space-y-1">
+                        <li>• League invite codes and share links</li>
                         <li>• Favorite teams system</li>
                         <li>• Notifications</li>
                         <li>• Friend connections</li>
                         <li>• Match data automation</li>
                         <li>• Improved league UX</li>
+                        <li>• Member counts on league cards</li>
+                        <li>• Highlight current user in league leaderboard</li>
                     </ul>
                 </div>
 
@@ -71,6 +80,7 @@ export default function DevProgressPage() {
                     <ul className="text-zinc-400 space-y-1">
                         <li>• Competitive NWSL prediction platform</li>
                         <li>• Social competition between friends and leagues</li>
+                        <li>• Community-driven prediction rankings</li>
                         <li>• Optional gamified investing layer added later</li>
                         <li>• Correct picks automatically invest funds into ETFs or a high-yield savings account</li>
                         <li>• Incorrect picks return the original principal</li>
