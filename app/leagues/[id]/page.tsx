@@ -16,15 +16,70 @@ export default function LeaguePage() {
     const [members, setMembers] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
+    const [inviteCode, setInviteCode] = useState<string | null>(null)
+    const [creatingInvite, setCreatingInvite] = useState(false)
+
     useEffect(() => {
         loadLeague()
+        loadInvite()
     }, [])
+
+    async function loadInvite() {
+
+        const { data } = await supabase
+            .from('league_invites')
+            .select('invite_code')
+            .eq('league_id', leagueId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (data) {
+            setInviteCode(data.invite_code)
+        }
+    }
+
+    function generateCode() {
+        return Math.random().toString(36).substring(2, 8).toUpperCase()
+    }
+
+    async function createInvite() {
+
+        setCreatingInvite(true)
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) return
+
+        const code = generateCode()
+
+        const { error } = await supabase
+            .from('league_invites')
+            .insert({
+                league_id: leagueId,
+                invite_code: code,
+                created_by: user.id
+            })
+
+        if (!error) {
+            setInviteCode(code)
+        }
+
+        setCreatingInvite(false)
+    }
+
+    function copyCode() {
+
+        if (!inviteCode) return
+
+        navigator.clipboard.writeText(inviteCode)
+        alert('Invite code copied!')
+    }
 
     async function loadLeague() {
 
         setLoading(true)
 
-        // 1️⃣ League name
         const { data: league } = await supabase
             .from('leagues')
             .select('name')
@@ -35,7 +90,6 @@ export default function LeaguePage() {
             setLeagueName(league.name)
         }
 
-        // 2️⃣ Member IDs
         const { data: memberRows } = await supabase
             .from('league_members')
             .select('user_id')
@@ -49,7 +103,6 @@ export default function LeaguePage() {
 
         const userIds = memberRows.map(m => m.user_id)
 
-        // 3️⃣ Usernames
         const { data: users } = await supabase
             .from('profiles')
             .select('id, username')
@@ -61,7 +114,6 @@ export default function LeaguePage() {
             usernameMap[u.id] = u.username
         })
 
-        // 4️⃣ Picks for leaderboard
         const { data: picks } = await supabase
             .from('picks')
             .select('user_id, is_correct')
@@ -136,6 +188,65 @@ export default function LeaguePage() {
                 {leagueName || 'League'}
             </h1>
 
+            {/* INVITE SECTION */}
+
+            <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+
+                <h2 className="text-lg font-semibold mb-4 text-green-400">
+                    Invite Friends
+                </h2>
+
+                {!inviteCode && (
+
+                    <button
+                        onClick={createInvite}
+                        disabled={creatingInvite}
+                        className="
+                        w-full py-3 rounded-xl border border-zinc-700
+                        hover:border-green-400
+                        hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                        transition
+                        "
+                    >
+                        Generate Invite Code
+                    </button>
+
+                )}
+
+                {inviteCode && (
+
+                    <div className="space-y-4">
+
+                        <div className="text-center">
+
+                            <div className="text-zinc-400 text-sm mb-1">
+                                Invite Code
+                            </div>
+
+                            <div className="text-2xl font-semibold tracking-widest">
+                                {inviteCode}
+                            </div>
+
+                        </div>
+
+                        <button
+                            onClick={copyCode}
+                            className="
+                            w-full py-3 rounded-xl border border-zinc-700
+                            hover:border-green-400
+                            hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                            transition
+                            "
+                        >
+                            Copy Invite Code
+                        </button>
+
+                    </div>
+
+                )}
+
+            </div>
+
             {loading && (
                 <div className="text-zinc-400 mb-8">
                     Loading league...
@@ -149,11 +260,11 @@ export default function LeaguePage() {
                     <div
                         key={index}
                         className="
-            rounded-2xl p-6 border bg-zinc-900 border-zinc-800
-            hover:border-green-400
-            hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
-            transition
-            "
+                        rounded-2xl p-6 border bg-zinc-900 border-zinc-800
+                        hover:border-green-400
+                        hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                        transition
+                        "
                     >
 
                         <div className="flex justify-between items-center">
@@ -193,10 +304,10 @@ export default function LeaguePage() {
             <button
                 onClick={leaveLeague}
                 className="
-        w-full py-3 rounded-xl border border-red-500 text-red-400
-        hover:shadow-[0_0_16px_rgba(239,68,68,0.6)]
-        transition
-        "
+                w-full py-3 rounded-xl border border-red-500 text-red-400
+                hover:shadow-[0_0_16px_rgba(239,68,68,0.6)]
+                transition
+                "
             >
                 Leave League
             </button>
