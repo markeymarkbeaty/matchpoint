@@ -4,19 +4,28 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
 
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from 'recharts'
+
 export default function InvestPage() {
 
     const [joined, setJoined] = useState(false)
     const [loading, setLoading] = useState(true)
-    const [joining, setJoining] = useState(false)
-    const [leaving, setLeaving] = useState(false)
 
     const [available, setAvailable] = useState(0)
     const [invested, setInvested] = useState(0)
 
     const [investmentType, setInvestmentType] = useState('HYSA')
-
     const [activeBets, setActiveBets] = useState<any[]>([])
+
+    const [joining, setJoining] = useState(false)
+    const [leaving, setLeaving] = useState(false)
 
     useEffect(() => {
         initialize()
@@ -104,7 +113,6 @@ export default function InvestPage() {
             .select(`
         id,
         amount,
-        match_id,
         matches (
           home_team,
           away_team
@@ -129,6 +137,13 @@ export default function InvestPage() {
 
         setInvestmentType(type)
     }
+
+    const chartData = [
+        { name: 'Start', value: 100 },
+        { name: 'Invested', value: invested },
+        { name: 'Available', value: available },
+        { name: 'Total', value: available + invested }
+    ]
 
     if (loading) {
         return (
@@ -155,16 +170,9 @@ export default function InvestPage() {
                     </h2>
 
                     <p className="text-zinc-400">
-                        Allocate money to your predictions. Correct picks invest the money.
-                        Incorrect picks return your funds. No money is lost.
+                        Allocate money to your predictions. Correct picks invest funds.
+                        Incorrect picks return your money.
                     </p>
-
-                    <ul className="text-zinc-400 text-sm space-y-1">
-                        <li>• Optional investing</li>
-                        <li>• Correct picks invest funds</li>
-                        <li>• Incorrect picks return funds</li>
-                        <li>• Learn disciplined investing</li>
-                    </ul>
 
                     <button
                         onClick={joinInvesting}
@@ -187,32 +195,26 @@ export default function InvestPage() {
 
                 <div className="space-y-8">
 
-                    {/* ACCOUNT SUMMARY */}
+                    {/* CAPITAL */}
 
                     <div className="grid grid-cols-2 gap-4">
 
                         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-
                             <div className="text-xs text-zinc-500 mb-1">
                                 Available Capital
                             </div>
-
                             <div className="text-xl font-semibold text-green-400">
                                 ${available}
                             </div>
-
                         </div>
 
                         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-
                             <div className="text-xs text-zinc-500 mb-1">
                                 Invested Capital
                             </div>
-
                             <div className="text-xl font-semibold text-green-400">
                                 ${invested}
                             </div>
-
                         </div>
 
                     </div>
@@ -293,16 +295,36 @@ export default function InvestPage() {
 
                     </div>
 
-                    {/* PERFORMANCE GRAPH */}
+                    {/* PORTFOLIO GRAPH */}
 
                     <div>
 
                         <h2 className="text-sm uppercase text-zinc-500 mb-3">
-                            Performance
+                            Portfolio Performance
                         </h2>
 
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center text-zinc-400 text-sm">
-                            Portfolio performance graph coming soon.
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 h-60">
+
+                            <ResponsiveContainer width="100%" height="100%">
+
+                                <LineChart data={chartData}>
+
+                                    <XAxis dataKey="name" stroke="#888" />
+                                    <YAxis stroke="#888" />
+
+                                    <Tooltip />
+
+                                    <Line
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#4ade80"
+                                        strokeWidth={3}
+                                    />
+
+                                </LineChart>
+
+                            </ResponsiveContainer>
+
                         </div>
 
                     </div>
@@ -330,5 +352,4 @@ export default function InvestPage() {
         </div>
 
     )
-
 }
