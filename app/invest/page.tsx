@@ -11,8 +11,7 @@ import {
     Area,
     XAxis,
     YAxis,
-    Tooltip,
-    CartesianGrid
+    Tooltip
 } from 'recharts'
 
 export default function InvestPage() {
@@ -29,6 +28,7 @@ export default function InvestPage() {
     const [leaving, setLeaving] = useState(false)
 
     const [activeBets, setActiveBets] = useState<any[]>([])
+    const [investmentType, setInvestmentType] = useState('HYSA')
 
     useEffect(() => {
         initialize()
@@ -49,12 +49,14 @@ export default function InvestPage() {
         if (account) {
 
             setJoined(true)
-
             setAvailable(account.balance_available)
             setInvested(account.balance_invested)
 
-            loadActiveBets(user.id)
+            if (account.account_type) {
+                setInvestmentType(account.account_type)
+            }
 
+            loadActiveBets(user.id)
         }
 
         setLoading(false)
@@ -66,27 +68,18 @@ export default function InvestPage() {
 
         const { data: { user } } = await supabase.auth.getUser()
 
-        if (!user) {
-            console.log("No user")
-            return
-        }
+        if (!user) return
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('user_investment_accounts')
             .upsert({
                 user_id: user.id,
                 balance_available: STARTING_CAPITAL,
-                balance_invested: 0
+                balance_invested: 0,
+                account_type: 'HYSA'
             })
-            .select()
 
-        if (error) {
-            console.error("Join investing error:", error)
-            setJoining(false)
-            return
-        }
-
-        if (data) {
+        if (!error) {
             setJoined(true)
             setAvailable(STARTING_CAPITAL)
         }
@@ -135,17 +128,30 @@ export default function InvestPage() {
         if (data) setActiveBets(data)
     }
 
+    async function changeInvestmentType(type: string) {
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) return
+
+        await supabase
+            .from('user_investment_accounts')
+            .update({ account_type: type })
+            .eq('user_id', user.id)
+
+        setInvestmentType(type)
+    }
+
     const portfolioValue = available + invested
     const gain = portfolioValue - STARTING_CAPITAL
-    const gainPercent = ((gain / STARTING_CAPITAL) * 100).toFixed(2)
+    const percent = ((gain / STARTING_CAPITAL) * 100).toFixed(2)
 
-    const chartData = [
-        { week: 'Start', value: 100 },
-        { week: 'Week 2', value: 102 },
-        { week: 'Week 4', value: 105 },
-        { week: 'Week 6', value: 108 },
-        { week: 'Week 8', value: 112 },
-        { week: 'Week 10', value: 118 }
+    const exampleChartData = [
+        { month: 'Start', value: 100 },
+        { month: 'Month 1', value: 102 },
+        { month: 'Month 2', value: 106 },
+        { month: 'Month 3', value: 110 },
+        { month: 'Month 4', value: 118 }
     ]
 
     if (loading) {
@@ -158,9 +164,9 @@ export default function InvestPage() {
 
     return (
 
-        <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 pb-32">
+        <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 pb-32 overflow-hidden">
 
-            <div className="max-w-4xl mx-auto">
+            <div className="relative max-w-4xl mx-auto">
 
                 {!joined && (
 
@@ -180,7 +186,7 @@ export default function InvestPage() {
 
                             <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
                                 Turn predictions into a disciplined investing habit.
-                                Correct picks invest funds while incorrect picks return your money.
+                                Correct picks invest funds, incorrect picks return your money.
                             </p>
 
                             <button
@@ -193,7 +199,72 @@ export default function InvestPage() {
 
                         </section>
 
-                        {/* Example Chart */}
+                        {/* DIVIDER */}
+
+                        <div className="h-px w-full bg-gradient-to-r from-transparent via-green-400 to-transparent mb-16 opacity-40" />
+
+                        {/* FEATURES */}
+
+                        <section className="grid md:grid-cols-3 gap-8 mb-20">
+
+                            <Feature
+                                title="Allocate to Picks"
+                                description="Choose optional investment amounts on predictions."
+                            />
+
+                            <Feature
+                                title="Correct Picks Invest"
+                                description="Winning predictions grow your portfolio."
+                            />
+
+                            <Feature
+                                title="Incorrect Picks Return"
+                                description="Wrong picks return your original funds."
+                            />
+
+                        </section>
+
+                        {/* EXAMPLE CARD */}
+
+                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20">
+
+                            <h2 className="text-xl font-semibold text-green-400 mb-4">
+                                Example Prediction
+                            </h2>
+
+                            <p className="text-zinc-400 mb-4">
+                                Washington Spirit vs Portland Thorns
+                            </p>
+
+                            <p className="text-zinc-500 text-sm mb-4">
+                                Pick Washington — Invest $10
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+
+                                <div className="bg-zinc-800 rounded-xl p-4">
+                                    <div className="text-green-400 font-semibold mb-1">
+                                        Correct Pick
+                                    </div>
+                                    <div className="text-zinc-400">
+                                        $10 invested into your portfolio
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-800 rounded-xl p-4">
+                                    <div className="text-red-400 font-semibold mb-1">
+                                        Incorrect Pick
+                                    </div>
+                                    <div className="text-zinc-400">
+                                        $10 returned to your balance
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </section>
+
+                        {/* EXAMPLE GRAPH */}
 
                         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
 
@@ -201,22 +272,20 @@ export default function InvestPage() {
                                 Example Portfolio Growth
                             </h2>
 
-                            <div className="h-72 min-h-[280px]">
+                            <div className="h-48">
 
                                 <ResponsiveContainer width="100%" height="100%">
 
-                                    <AreaChart data={chartData}>
+                                    <AreaChart data={exampleChartData}>
 
                                         <defs>
-                                            <linearGradient id="gain" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
+                                            <linearGradient id="gainExample" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.7} />
                                                 <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
 
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-
-                                        <XAxis dataKey="week" stroke="#888" />
+                                        <XAxis dataKey="month" stroke="#888" />
                                         <YAxis stroke="#888" />
 
                                         <Tooltip />
@@ -225,9 +294,8 @@ export default function InvestPage() {
                                             type="monotone"
                                             dataKey="value"
                                             stroke="#4ade80"
-                                            fillOpacity={1}
-                                            fill="url(#gain)"
                                             strokeWidth={3}
+                                            fill="url(#gainExample)"
                                         />
 
                                     </AreaChart>
@@ -243,84 +311,125 @@ export default function InvestPage() {
 
                 {joined && (
 
-                    <div className="space-y-10">
+                    <div className="space-y-8">
 
-                        {/* STARTING CAPITAL */}
+                        {/* CAPITAL */}
 
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
+                        <div className="grid grid-cols-2 gap-4">
 
-                            <div className="text-sm text-zinc-500 mb-1">
-                                Starting Capital
+                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                                <div className="text-xs text-zinc-500 mb-1">
+                                    Available Capital
+                                </div>
+                                <div className="text-xl font-semibold text-green-400">
+                                    ${available}
+                                </div>
                             </div>
 
-                            <div className="text-2xl font-semibold text-zinc-200">
-                                ${STARTING_CAPITAL}
+                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                                <div className="text-xs text-zinc-500 mb-1">
+                                    Invested Capital
+                                </div>
+                                <div className="text-xl font-semibold text-green-400">
+                                    ${invested}
+                                </div>
                             </div>
 
                         </div>
 
                         {/* PORTFOLIO VALUE */}
 
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
 
                             <div className="text-sm text-zinc-500 mb-1">
                                 Portfolio Value
                             </div>
 
-                            <div className="text-4xl font-bold text-green-400 mb-2">
+                            <div className="text-3xl font-bold text-green-400 mb-2">
                                 ${portfolioValue.toFixed(2)}
                             </div>
 
-                            <div className={`text-sm ${gain >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {gain >= 0 ? '+' : ''}{gain.toFixed(2)} ({gainPercent}%)
+                            <div className={`${gain >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {gain >= 0 ? '+' : ''}{gain.toFixed(2)} ({percent}%)
                             </div>
 
                         </div>
 
-                        {/* PERFORMANCE CHART */}
+                        {/* ACTIVE BETS */}
 
-                        <section>
+                        <div>
 
                             <h2 className="text-sm uppercase text-zinc-500 mb-3">
-                                Portfolio Performance
+                                Active Bets
                             </h2>
 
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 h-72 min-h-[280px]">
+                            <div className="space-y-3">
 
-                                <ResponsiveContainer width="100%" height="100%">
+                                {activeBets.length === 0 && (
 
-                                    <AreaChart data={chartData}>
+                                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-zinc-400 text-sm">
+                                        No active bets.
+                                    </div>
 
-                                        <defs>
-                                            <linearGradient id="gainReal" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
-                                                <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
+                                )}
 
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+                                {activeBets.map((bet, i) => (
 
-                                        <XAxis dataKey="week" stroke="#888" />
-                                        <YAxis stroke="#888" />
+                                    <div
+                                        key={i}
+                                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex justify-between"
+                                    >
 
-                                        <Tooltip />
+                                        <div className="text-zinc-400 text-sm">
+                                            {bet.matches?.home_team} vs {bet.matches?.away_team}
+                                        </div>
 
-                                        <Area
-                                            type="monotone"
-                                            dataKey="value"
-                                            stroke="#4ade80"
-                                            fillOpacity={1}
-                                            fill="url(#gainReal)"
-                                            strokeWidth={3}
-                                        />
+                                        <div className="text-green-400 font-semibold">
+                                            ${bet.amount}
+                                        </div>
 
-                                    </AreaChart>
+                                    </div>
 
-                                </ResponsiveContainer>
+                                ))}
 
                             </div>
 
-                        </section>
+                        </div>
+
+                        {/* INVESTMENT TYPE */}
+
+                        <div>
+
+                            <h2 className="text-sm uppercase text-zinc-500 mb-3">
+                                Investment Type
+                            </h2>
+
+                            <div className="grid grid-cols-2 gap-3">
+
+                                {['HYSA', 'ETF'].map((type) => {
+
+                                    const selected = investmentType === type
+
+                                    return (
+
+                                        <button
+                                            key={type}
+                                            onClick={() => changeInvestmentType(type)}
+                                            className={`py-3 rounded-xl border transition ${selected
+                                                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
+                                                    : 'border-zinc-700 hover:border-green-400'
+                                                }`}
+                                        >
+                                            {type}
+                                        </button>
+
+                                    )
+
+                                })}
+
+                            </div>
+
+                        </div>
 
                         {/* OPT OUT */}
 
@@ -341,5 +450,18 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
+    )
+}
+
+function Feature({ title, description }: { title: string; description: string }) {
+    return (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.3)]">
+            <h3 className="text-lg font-semibold mb-2 text-green-400">
+                {title}
+            </h3>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+                {description}
+            </p>
+        </div>
     )
 }
