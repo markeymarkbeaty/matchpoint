@@ -43,7 +43,8 @@ export default function LeaguesPage() {
             return
         }
 
-        const leagueIds = memberships.map(m => m.league_id)
+        // 🔧 FIX: remove duplicate league IDs
+        const leagueIds = [...new Set(memberships.map(m => m.league_id))]
 
         const { data: leaguesData, error: leaguesError } = await supabase
             .from('leagues')
@@ -200,5 +201,6 @@ export default function LeaguesPage() {
             <BottomNav />
 
         </div>
+
     )
 }
