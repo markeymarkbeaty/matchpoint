@@ -11,7 +11,8 @@ import {
     XAxis,
     YAxis,
     Tooltip,
-    ResponsiveContainer
+    ResponsiveContainer,
+    Legend
 } from 'recharts'
 
 export default function InvestPage() {
@@ -70,7 +71,7 @@ export default function InvestPage() {
 
         const { error } = await supabase
             .from('user_investment_accounts')
-            .insert({
+            .upsert({
                 user_id: user.id,
                 balance_available: 100,
                 balance_invested: 0,
@@ -98,7 +99,6 @@ export default function InvestPage() {
             .delete()
             .eq('user_id', user.id)
 
-        // Reset state
         setJoined(false)
         setAvailable(0)
         setInvested(0)
@@ -106,7 +106,6 @@ export default function InvestPage() {
 
         setLeaving(false)
 
-        // Re-run initialization to allow rejoin
         initialize()
     }
 
@@ -142,11 +141,12 @@ export default function InvestPage() {
         setInvestmentType(type)
     }
 
-    const chartData = [
-        { name: 'Start', value: 100 },
-        { name: 'Invested', value: invested },
-        { name: 'Available', value: available },
-        { name: 'Total', value: available + invested }
+    const portfolioData = [
+        { month: 'Start', HYSA: 100, ETF: 100 },
+        { month: 'Month 1', HYSA: 101, ETF: 105 },
+        { month: 'Month 2', HYSA: 102, ETF: 110 },
+        { month: 'Month 3', HYSA: 103, ETF: 118 },
+        { month: 'Month 4', HYSA: 104, ETF: 130 }
     ]
 
     if (loading) {
@@ -161,7 +161,7 @@ export default function InvestPage() {
 
         <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 pb-32 overflow-hidden">
 
-            <div className="relative max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto">
 
                 {!joined && (
 
@@ -180,8 +180,9 @@ export default function InvestPage() {
                             </motion.h1>
 
                             <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-                                Turn your predictions into a savings habit. Correct picks invest
-                                funds while incorrect picks simply return your money.
+                                MatchPoint Investing turns predictions into a disciplined
+                                investing habit. Correct picks invest funds, incorrect picks
+                                simply return your money.
                             </p>
 
                             <button
@@ -200,22 +201,106 @@ export default function InvestPage() {
 
                         {/* FEATURES */}
 
-                        <section className="grid md:grid-cols-3 gap-8 mb-20">
+                        <section className="grid md:grid-cols-3 gap-8 mb-16">
 
                             <Feature
                                 title="Allocate to Picks"
-                                description="Choose how much to invest on predictions."
+                                description="Choose optional amounts to invest on predictions."
                             />
 
                             <Feature
                                 title="Correct Picks Invest"
-                                description="Winning predictions automatically invest funds."
+                                description="Winning predictions invest funds into your portfolio."
                             />
 
                             <Feature
                                 title="Incorrect Picks Return"
-                                description="If you're wrong, your original funds return."
+                                description="Wrong picks return your original money."
                             />
+
+                        </section>
+
+                        {/* EXAMPLE CARD */}
+
+                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-16">
+
+                            <h2 className="text-xl font-semibold text-green-400 mb-4">
+                                Example Prediction
+                            </h2>
+
+                            <div className="flex justify-between text-sm text-zinc-400 mb-2">
+                                <span>Washington Spirit</span>
+                                <span>vs</span>
+                                <span>Portland Thorns</span>
+                            </div>
+
+                            <div className="text-sm text-zinc-500 mb-4">
+                                Pick: Washington Spirit — Invest $10
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+
+                                <div className="bg-zinc-800 rounded-xl p-4">
+                                    <div className="text-green-400 font-semibold mb-1">
+                                        Correct Pick
+                                    </div>
+                                    <div className="text-zinc-400">
+                                        $10 invested into portfolio
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-800 rounded-xl p-4">
+                                    <div className="text-red-400 font-semibold mb-1">
+                                        Incorrect Pick
+                                    </div>
+                                    <div className="text-zinc-400">
+                                        $10 returned to your balance
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </section>
+
+                        {/* EXAMPLE GRAPH */}
+
+                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+
+                            <h2 className="text-xl font-semibold text-green-400 mb-6">
+                                Example Portfolio Growth
+                            </h2>
+
+                            <div className="h-64">
+
+                                <ResponsiveContainer width="100%" height="100%">
+
+                                    <LineChart data={portfolioData}>
+
+                                        <XAxis dataKey="month" stroke="#aaa" />
+                                        <YAxis stroke="#aaa" />
+
+                                        <Tooltip />
+                                        <Legend />
+
+                                        <Line
+                                            type="monotone"
+                                            dataKey="HYSA"
+                                            stroke="#4ade80"
+                                            strokeWidth={3}
+                                        />
+
+                                        <Line
+                                            type="monotone"
+                                            dataKey="ETF"
+                                            stroke="#60a5fa"
+                                            strokeWidth={3}
+                                        />
+
+                                    </LineChart>
+
+                                </ResponsiveContainer>
+
+                            </div>
 
                         </section>
 
@@ -226,60 +311,24 @@ export default function InvestPage() {
 
                     <div className="space-y-10">
 
-                        {/* PORTFOLIO */}
-
                         <section className="grid grid-cols-2 gap-4">
 
                             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-
                                 <div className="text-xs text-zinc-500 mb-1">
                                     Available Capital
                                 </div>
-
                                 <div className="text-xl font-semibold text-green-400">
                                     ${available}
                                 </div>
-
                             </div>
 
                             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-
                                 <div className="text-xs text-zinc-500 mb-1">
                                     Invested Capital
                                 </div>
-
                                 <div className="text-xl font-semibold text-green-400">
                                     ${invested}
                                 </div>
-
-                            </div>
-
-                        </section>
-
-                        {/* GRAPH */}
-
-                        <section>
-
-                            <h2 className="text-sm uppercase text-zinc-500 mb-3">
-                                Portfolio Performance
-                            </h2>
-
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 h-60">
-
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData}>
-                                        <XAxis dataKey="name" stroke="#888" />
-                                        <YAxis stroke="#888" />
-                                        <Tooltip />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="value"
-                                            stroke="#4ade80"
-                                            strokeWidth={3}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-
                             </div>
 
                         </section>
@@ -360,8 +409,6 @@ export default function InvestPage() {
 
                         </section>
 
-                        {/* OPT OUT */}
-
                         <button
                             onClick={leaveInvesting}
                             disabled={leaving}
@@ -379,6 +426,7 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
+
     )
 }
 
