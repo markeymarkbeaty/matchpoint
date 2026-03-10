@@ -8,11 +8,13 @@ export default function PicksPage() {
 
   const [matches, setMatches] = useState<any[]>([])
   const [picks, setPicks] = useState<any>({})
+  const [investments, setInvestments] = useState<any>({})
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
 
   useEffect(() => {
     loadMatches()
     loadPicks()
+    loadInvestments()
   }, [])
 
   async function loadMatches() {
@@ -44,6 +46,48 @@ export default function PicksPage() {
     })
 
     setPicks(map)
+  }
+
+  async function loadInvestments() {
+
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+
+    if (!user) return
+
+    const { data } = await supabase
+      .from('prediction_investments')
+      .select('*')
+      .eq('user_id', user.id)
+
+    const map: any = {}
+
+    data?.forEach((i) => {
+      map[i.match_id] = i.amount
+    })
+
+    setInvestments(map)
+  }
+
+  async function invest(matchId: string, amount: number) {
+
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
+
+    if (!user) return
+
+    await supabase
+      .from('prediction_investments')
+      .upsert({
+        user_id: user.id,
+        match_id: matchId,
+        amount: amount
+      })
+
+    setInvestments({
+      ...investments,
+      [matchId]: amount
+    })
   }
 
   async function makePick(matchId: string, team: string, matchDate: string) {
@@ -160,6 +204,7 @@ export default function PicksPage() {
     const locked = new Date() >= kickoff
 
     const userPick = picks[id]
+    const investment = investments[id]
 
     const correct =
       userPick !== undefined &&
@@ -236,7 +281,7 @@ export default function PicksPage() {
 
         )}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 mb-4">
 
           {['home', 'draw', 'away'].map((team) => {
 
@@ -249,8 +294,8 @@ export default function PicksPage() {
                 disabled={locked}
                 onClick={() => makePick(id, team, date)}
                 className={`relative py-2 rounded-xl border transition ${selected
-                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                    : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
+                  ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                  : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
                   } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
 
@@ -269,6 +314,43 @@ export default function PicksPage() {
           })}
 
         </div>
+
+        {userPick && !locked && (
+
+          <div className="mt-2">
+
+            <div className="text-xs text-zinc-500 mb-2 text-center">
+              Optional Investment
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+
+              {[5, 10, 25].map((amount) => {
+
+                const selected = investment === amount
+
+                return (
+
+                  <button
+                    key={amount}
+                    onClick={() => invest(id, amount)}
+                    className={`py-1 rounded-lg border text-sm transition ${selected
+                      ? 'border-green-400 text-green-300 shadow-[0_0_8px_rgba(74,222,128,0.5)]'
+                      : 'border-zinc-700 hover:border-green-400'
+                      }`}
+                  >
+                    ${amount}
+                  </button>
+
+                )
+
+              })}
+
+            </div>
+
+          </div>
+
+        )}
 
       </div>
 
