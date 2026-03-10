@@ -15,30 +15,27 @@ export default function LeaguesPage() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-
-        async function init() {
-
-            const { data: { session } } = await supabase.auth.getSession()
-
-            if (!session) {
-                setLoading(false)
-                return
-            }
-
-            loadLeagues(session.user.id)
-
-        }
-
-        init()
-
+        loadLeagues()
     }, [])
 
-    async function loadLeagues(userId: string) {
+    async function loadLeagues() {
 
-        const { data: memberships } = await supabase
+        const { data: { user } } = await supabase.auth.getUser()
+
+        console.log("USER:", user)
+
+        if (!user) {
+            setLoading(false)
+            return
+        }
+
+        const { data: memberships, error: membershipError } = await supabase
             .from('league_members')
-            .select('league_id')
-            .eq('user_id', userId)
+            .select('*')
+            .eq('user_id', user.id)
+
+        console.log("MEMBERSHIPS:", memberships)
+        console.log("MEMBERSHIP ERROR:", membershipError)
 
         if (!memberships || memberships.length === 0) {
             setLeagues([])
@@ -48,12 +45,15 @@ export default function LeaguesPage() {
 
         const leagueIds = memberships.map(m => m.league_id)
 
-        const { data: leagueRows } = await supabase
+        const { data: leaguesData, error: leaguesError } = await supabase
             .from('leagues')
             .select('*')
             .in('id', leagueIds)
 
-        setLeagues(leagueRows || [])
+        console.log("LEAGUES:", leaguesData)
+        console.log("LEAGUES ERROR:", leaguesError)
+
+        setLeagues(leaguesData || [])
         setLoading(false)
     }
 
@@ -147,7 +147,7 @@ export default function LeaguesPage() {
 
             </div>
 
-            {/* CREATE */}
+            {/* CREATE LEAGUE */}
 
             <div className="mb-10">
 
@@ -172,7 +172,7 @@ export default function LeaguesPage() {
 
             </div>
 
-            {/* JOIN */}
+            {/* JOIN LEAGUE */}
 
             <div className="mb-12">
 
@@ -200,6 +200,5 @@ export default function LeaguesPage() {
             <BottomNav />
 
         </div>
-
     )
 }
