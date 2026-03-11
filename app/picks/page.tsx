@@ -8,7 +8,6 @@ export default function PicksPage() {
 
   const [matches, setMatches] = useState<any[]>([])
   const [picks, setPicks] = useState<any>({})
-  const [investments, setInvestments] = useState<any>({})
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
 
   useEffect(() => {
@@ -38,18 +37,13 @@ export default function PicksPage() {
       .select('*')
       .eq('user_id', user.id)
 
-    const pickMap: any = {}
-    const investMap: any = {}
+    const map: any = {}
 
     data?.forEach((p) => {
-
-      pickMap[p.match_id] = p.selected_team
-      investMap[p.match_id] = p.investment_amount || 0
-
+      map[p.match_id] = p.selected_team
     })
 
-    setPicks(pickMap)
-    setInvestments(investMap)
+    setPicks(map)
   }
 
   async function makePick(matchId: string, team: string, matchDate: string) {
@@ -75,13 +69,9 @@ export default function PicksPage() {
         .eq('match_id', matchId)
 
       const updated = { ...picks }
-      const updatedInvest = { ...investments }
-
       delete updated[matchId]
-      delete updatedInvest[matchId]
 
       setPicks(updated)
-      setInvestments(updatedInvest)
 
       return
     }
@@ -91,36 +81,13 @@ export default function PicksPage() {
       .upsert({
         user_id: user.id,
         match_id: matchId,
-        selected_team: team,
-        investment_amount: investments[matchId] || 0
+        selected_team: team
       })
 
     setPicks({
       ...picks,
       [matchId]: team
     })
-  }
-
-  async function updateInvestment(matchId: string, amount: number) {
-
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
-
-    if (!user) return
-
-    setInvestments({
-      ...investments,
-      [matchId]: amount
-    })
-
-    await supabase
-      .from('picks')
-      .upsert({
-        user_id: user.id,
-        match_id: matchId,
-        selected_team: picks[matchId],
-        investment_amount: amount
-      })
   }
 
   function formatDate(dateString: string) {
@@ -193,7 +160,6 @@ export default function PicksPage() {
     const locked = new Date() >= kickoff
 
     const userPick = picks[id]
-    const investment = investments[id] || 0
 
     const correct =
       userPick !== undefined &&
@@ -270,7 +236,7 @@ export default function PicksPage() {
 
         )}
 
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-3 gap-3">
 
           {['home', 'draw', 'away'].map((team) => {
 
@@ -303,30 +269,6 @@ export default function PicksPage() {
           })}
 
         </div>
-
-        {userPick && !locked && (
-
-          <div className="mt-2">
-
-            <div className="text-xs text-zinc-400 mb-2">
-              Optional Investment: ${investment}
-            </div>
-
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="1"
-              value={investment}
-              onChange={(e) =>
-                updateInvestment(id, Number(e.target.value))
-              }
-              className="w-full accent-green-500"
-            />
-
-          </div>
-
-        )}
 
       </div>
 
