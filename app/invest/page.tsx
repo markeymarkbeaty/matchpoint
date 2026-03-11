@@ -27,7 +27,6 @@ export default function InvestPage() {
     const [joining, setJoining] = useState(false)
     const [leaving, setLeaving] = useState(false)
 
-    const [activeBets, setActiveBets] = useState<any[]>([])
     const [investmentType, setInvestmentType] = useState('HYSA')
 
     useEffect(() => {
@@ -56,7 +55,6 @@ export default function InvestPage() {
                 setInvestmentType(account.account_type)
             }
 
-            loadActiveBets(user.id)
         }
 
         setLoading(false)
@@ -70,7 +68,6 @@ export default function InvestPage() {
 
         if (!user) return
 
-        // check if account exists first
         const { data: existing } = await supabase
             .from('user_investment_accounts')
             .select('user_id')
@@ -79,7 +76,7 @@ export default function InvestPage() {
 
         if (!existing) {
 
-            const { error } = await supabase
+            await supabase
                 .from('user_investment_accounts')
                 .insert({
                     user_id: user.id,
@@ -88,23 +85,15 @@ export default function InvestPage() {
                     account_type: 'HYSA'
                 })
 
-            if (error) {
-                console.error('Insert error:', error)
-            }
-
         } else {
 
-            const { error } = await supabase
+            await supabase
                 .from('user_investment_accounts')
                 .update({
                     balance_available: STARTING_CAPITAL,
                     balance_invested: 0
                 })
                 .eq('user_id', user.id)
-
-            if (error) {
-                console.error('Update error:', error)
-            }
 
         }
 
@@ -122,64 +111,27 @@ export default function InvestPage() {
 
         if (!user) return
 
-        const { error } = await supabase
+        await supabase
             .from('user_investment_accounts')
             .delete()
             .eq('user_id', user.id)
 
-        if (error) {
-            console.error(error)
-        }
-
         setJoined(false)
         setAvailable(0)
         setInvested(0)
-        setActiveBets([])
 
         setLeaving(false)
-    }
-
-    async function loadActiveBets(userId: string) {
-
-        const { data } = await supabase
-            .from('prediction_investments')
-            .select(`
-        id,
-        amount,
-        matches (
-          home_team,
-          away_team
-        )
-      `)
-            .eq('user_id', userId)
-            .eq('status', 'pending')
-
-        if (data) setActiveBets(data)
-    }
-
-    async function changeInvestmentType(type: string) {
-
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) return
-
-        await supabase
-            .from('user_investment_accounts')
-            .update({ account_type: type })
-            .eq('user_id', user.id)
-
-        setInvestmentType(type)
     }
 
     const portfolioValue = available + invested
     const gain = portfolioValue - STARTING_CAPITAL
     const percent = ((gain / STARTING_CAPITAL) * 100).toFixed(2)
 
-    const exampleChartData = [
+    const chartData = [
         { month: 'Start', value: 100 },
         { month: 'Month 1', value: 102 },
         { month: 'Month 2', value: 106 },
-        { month: 'Month 3', value: 110 },
+        { month: 'Month 3', value: 111 },
         { month: 'Month 4', value: 118 }
     ]
 
@@ -193,15 +145,15 @@ export default function InvestPage() {
 
     return (
 
-        <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 pb-32 overflow-hidden">
+        <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 overflow-hidden">
 
             <div className="relative max-w-4xl mx-auto">
+
+                {/* LANDING PAGE */}
 
                 {!joined && (
 
                     <>
-                        {/* HERO */}
-
                         <section className="text-center mb-16">
 
                             <motion.h1
@@ -214,7 +166,8 @@ export default function InvestPage() {
                             </motion.h1>
 
                             <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-                                Turn predictions into a disciplined investing habit.
+                                An optional investing layer where correct picks invest funds and
+                                incorrect picks return your original money.
                             </p>
 
                             <button
@@ -227,22 +180,63 @@ export default function InvestPage() {
 
                         </section>
 
-                        {/* Example Chart */}
+                        <div className="h-px w-full bg-gradient-to-r from-transparent via-green-400 to-transparent mb-16 opacity-40" />
+
+                        {/* FEATURES */}
+
+                        <section className="grid md:grid-cols-3 gap-8 mb-20">
+
+                            <Feature
+                                title="Make Your Picks"
+                                description="Continue predicting matches exactly as you do now."
+                            />
+
+                            <Feature
+                                title="Correct Picks Invest"
+                                description="Winning predictions grow your savings automatically."
+                            />
+
+                            <Feature
+                                title="Incorrect Picks Return"
+                                description="Lose the pick, keep the money."
+                            />
+
+                        </section>
+
+                        {/* EXAMPLE */}
+
+                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20">
+
+                            <h2 className="text-2xl font-semibold mb-4 text-green-400">
+                                Example Investment
+                            </h2>
+
+                            <p className="text-zinc-400 mb-4">
+                                Washington Spirit vs Portland Thorns
+                            </p>
+
+                            <p className="text-zinc-500 text-sm">
+                                Pick Washington — Invest $10
+                            </p>
+
+                        </section>
+
+                        {/* GRAPH */}
 
                         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
 
-                            <h2 className="text-xl font-semibold text-green-400 mb-6">
+                            <h2 className="text-2xl font-semibold mb-6 text-green-400">
                                 Example Portfolio Growth
                             </h2>
 
-                            <div className="h-48">
+                            <div className="h-40">
 
                                 <ResponsiveContainer width="100%" height="100%">
 
-                                    <AreaChart data={exampleChartData}>
+                                    <AreaChart data={chartData}>
 
                                         <defs>
-                                            <linearGradient id="gainExample" x1="0" y1="0" x2="0" y2="1">
+                                            <linearGradient id="growth" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#4ade80" stopOpacity={0.7} />
                                                 <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
                                             </linearGradient>
@@ -258,7 +252,7 @@ export default function InvestPage() {
                                             dataKey="value"
                                             stroke="#4ade80"
                                             strokeWidth={3}
-                                            fill="url(#gainExample)"
+                                            fill="url(#growth)"
                                         />
 
                                     </AreaChart>
@@ -272,22 +266,57 @@ export default function InvestPage() {
                     </>
                 )}
 
+                {/* DASHBOARD */}
+
                 {joined && (
 
                     <div className="space-y-8">
 
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
 
                             <div className="text-sm text-zinc-500 mb-1">
                                 Portfolio Value
                             </div>
 
-                            <div className="text-3xl font-bold text-green-400 mb-2">
+                            <div className="text-4xl font-bold text-green-400 mb-2">
                                 ${portfolioValue.toFixed(2)}
                             </div>
 
                             <div className={`${gain >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                 {gain >= 0 ? '+' : ''}{gain.toFixed(2)} ({percent}%)
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <h2 className="text-sm uppercase text-zinc-500 mb-3">
+                                Investment Type
+                            </h2>
+
+                            <div className="grid grid-cols-2 gap-3">
+
+                                {['HYSA', 'ETF'].map(type => {
+
+                                    const selected = investmentType === type
+
+                                    return (
+
+                                        <button
+                                            key={type}
+                                            onClick={() => setInvestmentType(type)}
+                                            className={`py-3 rounded-xl border transition ${selected
+                                                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
+                                                    : 'border-zinc-700 hover:border-green-400'
+                                                }`}
+                                        >
+                                            {type}
+                                        </button>
+
+                                    )
+
+                                })}
+
                             </div>
 
                         </div>
@@ -309,5 +338,22 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
+    )
+}
+
+function Feature({ title, description }: { title: string; description: string }) {
+
+    return (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.3)]">
+
+            <h3 className="text-lg font-semibold mb-2 text-green-400">
+                {title}
+            </h3>
+
+            <p className="text-zinc-400 text-sm leading-relaxed">
+                {description}
+            </p>
+
+        </div>
     )
 }
