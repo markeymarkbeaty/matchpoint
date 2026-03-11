@@ -2,8 +2,26 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 
 export default function HomePage() {
+
+  const [showInvite, setShowInvite] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const inviteLink = 'https://matchpoint-one.vercel.app'
+
+  function copyLink() {
+
+    navigator.clipboard.writeText(inviteLink)
+
+    setCopied(true)
+
+    setTimeout(() => {
+      setCopied(false)
+    }, 2000)
+  }
+
   return (
     <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 overflow-hidden">
 
@@ -92,13 +110,39 @@ export default function HomePage() {
             Invite Your Friends
           </h2>
 
-          <p className="text-zinc-400 mb-4">
+          <p className="text-zinc-400 mb-6">
             The more players, the better the competition.
           </p>
 
-          <p className="text-zinc-500 text-sm break-all">
-            https://matchpoint-one.vercel.app
-          </p>
+          {!showInvite && (
+
+            <button
+              onClick={() => setShowInvite(true)}
+              className="bg-zinc-900 border border-zinc-700 px-6 py-3 rounded-xl transition hover:border-green-400 hover:shadow-[0_0_12px_rgba(74,222,128,0.4)]"
+            >
+              Invite Friends
+            </button>
+
+          )}
+
+          {showInvite && (
+
+            <div className="flex flex-col items-center gap-4">
+
+              <button
+                onClick={copyLink}
+                className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+              >
+                {copied ? 'Copied!' : 'Copy Invite Link'}
+              </button>
+
+              <p className="text-xs text-zinc-500 break-all text-center">
+                {inviteLink}
+              </p>
+
+            </div>
+
+          )}
 
         </section>
 
