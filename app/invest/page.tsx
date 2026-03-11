@@ -70,19 +70,46 @@ export default function InvestPage() {
 
         if (!user) return
 
-        const { error } = await supabase
+        // check if account exists first
+        const { data: existing } = await supabase
             .from('user_investment_accounts')
-            .upsert({
-                user_id: user.id,
-                balance_available: STARTING_CAPITAL,
-                balance_invested: 0,
-                account_type: 'HYSA'
-            })
+            .select('user_id')
+            .eq('user_id', user.id)
+            .maybeSingle()
 
-        if (!error) {
-            setJoined(true)
-            setAvailable(STARTING_CAPITAL)
+        if (!existing) {
+
+            const { error } = await supabase
+                .from('user_investment_accounts')
+                .insert({
+                    user_id: user.id,
+                    balance_available: STARTING_CAPITAL,
+                    balance_invested: 0,
+                    account_type: 'HYSA'
+                })
+
+            if (error) {
+                console.error('Insert error:', error)
+            }
+
+        } else {
+
+            const { error } = await supabase
+                .from('user_investment_accounts')
+                .update({
+                    balance_available: STARTING_CAPITAL,
+                    balance_invested: 0
+                })
+                .eq('user_id', user.id)
+
+            if (error) {
+                console.error('Update error:', error)
+            }
+
         }
+
+        setJoined(true)
+        setAvailable(STARTING_CAPITAL)
 
         setJoining(false)
     }
@@ -95,10 +122,14 @@ export default function InvestPage() {
 
         if (!user) return
 
-        await supabase
+        const { error } = await supabase
             .from('user_investment_accounts')
             .delete()
             .eq('user_id', user.id)
+
+        if (error) {
+            console.error(error)
+        }
 
         setJoined(false)
         setAvailable(0)
@@ -106,8 +137,6 @@ export default function InvestPage() {
         setActiveBets([])
 
         setLeaving(false)
-
-        initialize()
     }
 
     async function loadActiveBets(userId: string) {
@@ -186,7 +215,6 @@ export default function InvestPage() {
 
                             <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
                                 Turn predictions into a disciplined investing habit.
-                                Correct picks invest funds, incorrect picks return your money.
                             </p>
 
                             <button
@@ -199,72 +227,7 @@ export default function InvestPage() {
 
                         </section>
 
-                        {/* DIVIDER */}
-
-                        <div className="h-px w-full bg-gradient-to-r from-transparent via-green-400 to-transparent mb-16 opacity-40" />
-
-                        {/* FEATURES */}
-
-                        <section className="grid md:grid-cols-3 gap-8 mb-20">
-
-                            <Feature
-                                title="Allocate to Picks"
-                                description="Choose optional investment amounts on predictions."
-                            />
-
-                            <Feature
-                                title="Correct Picks Invest"
-                                description="Winning predictions grow your portfolio."
-                            />
-
-                            <Feature
-                                title="Incorrect Picks Return"
-                                description="Wrong picks return your original funds."
-                            />
-
-                        </section>
-
-                        {/* EXAMPLE CARD */}
-
-                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20">
-
-                            <h2 className="text-xl font-semibold text-green-400 mb-4">
-                                Example Prediction
-                            </h2>
-
-                            <p className="text-zinc-400 mb-4">
-                                Washington Spirit vs Portland Thorns
-                            </p>
-
-                            <p className="text-zinc-500 text-sm mb-4">
-                                Pick Washington — Invest $10
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-
-                                <div className="bg-zinc-800 rounded-xl p-4">
-                                    <div className="text-green-400 font-semibold mb-1">
-                                        Correct Pick
-                                    </div>
-                                    <div className="text-zinc-400">
-                                        $10 invested into your portfolio
-                                    </div>
-                                </div>
-
-                                <div className="bg-zinc-800 rounded-xl p-4">
-                                    <div className="text-red-400 font-semibold mb-1">
-                                        Incorrect Pick
-                                    </div>
-                                    <div className="text-zinc-400">
-                                        $10 returned to your balance
-                                    </div>
-                                </div>
-
-                            </div>
-
-                        </section>
-
-                        {/* EXAMPLE GRAPH */}
+                        {/* Example Chart */}
 
                         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
 
@@ -313,32 +276,6 @@ export default function InvestPage() {
 
                     <div className="space-y-8">
 
-                        {/* CAPITAL */}
-
-                        <div className="grid grid-cols-2 gap-4">
-
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-                                <div className="text-xs text-zinc-500 mb-1">
-                                    Available Capital
-                                </div>
-                                <div className="text-xl font-semibold text-green-400">
-                                    ${available}
-                                </div>
-                            </div>
-
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-                                <div className="text-xs text-zinc-500 mb-1">
-                                    Invested Capital
-                                </div>
-                                <div className="text-xl font-semibold text-green-400">
-                                    ${invested}
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {/* PORTFOLIO VALUE */}
-
                         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
 
                             <div className="text-sm text-zinc-500 mb-1">
@@ -354,84 +291,6 @@ export default function InvestPage() {
                             </div>
 
                         </div>
-
-                        {/* ACTIVE BETS */}
-
-                        <div>
-
-                            <h2 className="text-sm uppercase text-zinc-500 mb-3">
-                                Active Bets
-                            </h2>
-
-                            <div className="space-y-3">
-
-                                {activeBets.length === 0 && (
-
-                                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-zinc-400 text-sm">
-                                        No active bets.
-                                    </div>
-
-                                )}
-
-                                {activeBets.map((bet, i) => (
-
-                                    <div
-                                        key={i}
-                                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex justify-between"
-                                    >
-
-                                        <div className="text-zinc-400 text-sm">
-                                            {bet.matches?.home_team} vs {bet.matches?.away_team}
-                                        </div>
-
-                                        <div className="text-green-400 font-semibold">
-                                            ${bet.amount}
-                                        </div>
-
-                                    </div>
-
-                                ))}
-
-                            </div>
-
-                        </div>
-
-                        {/* INVESTMENT TYPE */}
-
-                        <div>
-
-                            <h2 className="text-sm uppercase text-zinc-500 mb-3">
-                                Investment Type
-                            </h2>
-
-                            <div className="grid grid-cols-2 gap-3">
-
-                                {['HYSA', 'ETF'].map((type) => {
-
-                                    const selected = investmentType === type
-
-                                    return (
-
-                                        <button
-                                            key={type}
-                                            onClick={() => changeInvestmentType(type)}
-                                            className={`py-3 rounded-xl border transition ${selected
-                                                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
-                                                    : 'border-zinc-700 hover:border-green-400'
-                                                }`}
-                                        >
-                                            {type}
-                                        </button>
-
-                                    )
-
-                                })}
-
-                            </div>
-
-                        </div>
-
-                        {/* OPT OUT */}
 
                         <button
                             onClick={leaveInvesting}
@@ -450,18 +309,5 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
-    )
-}
-
-function Feature({ title, description }: { title: string; description: string }) {
-    return (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.3)]">
-            <h3 className="text-lg font-semibold mb-2 text-green-400">
-                {title}
-            </h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-                {description}
-            </p>
-        </div>
     )
 }
