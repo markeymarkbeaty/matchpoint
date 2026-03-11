@@ -42,14 +42,14 @@ export default function HomePage() {
           <div className="flex justify-center gap-4">
 
             <Link
-              href="/auth"
+              href="/auth?mode=signup"
               className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
             >
               Create Account
             </Link>
 
             <Link
-              href="/auth"
+              href="/auth?mode=login"
               className="bg-zinc-900 border border-zinc-700 px-6 py-3 rounded-xl transition hover:border-green-400 hover:shadow-[0_0_12px_rgba(74,222,128,0.4)]"
             >
               Log In
