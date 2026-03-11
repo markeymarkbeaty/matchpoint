@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function AuthPage() {
 
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [isSignup, setIsSignup] = useState(true)
   const [email, setEmail] = useState('')
@@ -15,6 +16,20 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+
+    const mode = searchParams.get('mode')
+
+    if (mode === 'login') {
+      setIsSignup(false)
+    }
+
+    if (mode === 'signup') {
+      setIsSignup(true)
+    }
+
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
 
