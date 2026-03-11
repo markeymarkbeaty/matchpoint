@@ -1,10 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function AuthPage() {
+  return (
+    <Suspense>
+      <AuthPageInner />
+    </Suspense>
+  )
+}
+
+function AuthPageInner() {
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -21,13 +29,8 @@ export default function AuthPage() {
 
     const mode = searchParams.get('mode')
 
-    if (mode === 'login') {
-      setIsSignup(false)
-    }
-
-    if (mode === 'signup') {
-      setIsSignup(true)
-    }
+    if (mode === 'login') setIsSignup(false)
+    if (mode === 'signup') setIsSignup(true)
 
   }, [searchParams])
 
