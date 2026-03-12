@@ -21,7 +21,7 @@ export default function InvestPage() {
     const [joining, setJoining] = useState(false)
     const [leaving, setLeaving] = useState(false)
 
-    const [investmentType, setInvestmentType] = useState('HYSA')
+    const [investmentType, setInvestmentType] = useState<string | null>(null)
 
     useEffect(() => {
         initialize()
@@ -77,14 +77,13 @@ export default function InvestPage() {
                 user_id: user.id,
                 balance_available: STARTING_CAPITAL,
                 balance_invested: 0,
-                account_type: 'HYSA'
+                account_type: null
             })
 
         if (!error) {
             setJoined(true)
             setAvailable(STARTING_CAPITAL)
-        } else {
-            console.error(error)
+            setInvestmentType(null)
         }
 
         setJoining(false)
@@ -106,8 +105,23 @@ export default function InvestPage() {
         setJoined(false)
         setAvailable(0)
         setInvested(0)
+        setInvestmentType(null)
 
         setLeaving(false)
+    }
+
+    async function updateInvestmentType(type: string) {
+
+        setInvestmentType(type)
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) return
+
+        await supabase
+            .from('user_investment_accounts')
+            .update({ account_type: type })
+            .eq('user_id', user.id)
     }
 
     const portfolioValue = available + invested
@@ -127,8 +141,6 @@ export default function InvestPage() {
         <main className="relative min-h-screen bg-black text-zinc-100 px-6 py-16 overflow-hidden">
 
             <div className="relative max-w-4xl mx-auto">
-
-                {/* LANDING PAGE */}
 
                 {!joined && (
 
@@ -158,68 +170,8 @@ export default function InvestPage() {
                             </button>
 
                         </section>
-
-                        <div className="h-px w-full bg-gradient-to-r from-transparent via-green-400 to-transparent mb-16 opacity-40" />
-
-                        {/* FEATURES */}
-
-                        <section className="grid md:grid-cols-3 gap-8 mb-20">
-
-                            <Feature
-                                title="Make Your Picks"
-                                description="Continue predicting matches exactly as you do now."
-                            />
-
-                            <Feature
-                                title="Correct Picks Invest"
-                                description="Winning predictions automatically move funds into your investment account."
-                            />
-
-                            <Feature
-                                title="Incorrect Picks Return"
-                                description="If your prediction is wrong, your original money simply returns to your balance."
-                            />
-
-                        </section>
-
-                        {/* HOW IT WORKS */}
-
-                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-
-                            <h2 className="text-2xl font-semibold mb-6 text-green-400">
-                                How It Works
-                            </h2>
-
-                            <div className="space-y-4 text-zinc-400">
-
-                                <p>
-                                    Example match:
-                                </p>
-
-                                <p className="text-zinc-300 font-medium">
-                                    Washington Spirit vs Portland Thorns
-                                </p>
-
-                                <div className="space-y-2 text-sm">
-
-                                    <p>1️⃣ You predict <span className="text-green-400">Washington Spirit</span></p>
-
-                                    <p>2️⃣ You allocate <span className="text-green-400">$10</span> to the prediction</p>
-
-                                    <p>3️⃣ If your pick is correct → <span className="text-green-400">$10 is invested</span></p>
-
-                                    <p>4️⃣ If your pick is incorrect → <span className="text-zinc-300">$10 returns to your balance</span></p>
-
-                                </div>
-
-                            </div>
-
-                        </section>
-
                     </>
                 )}
-
-                {/* DASHBOARD */}
 
                 {joined && (
 
@@ -257,7 +209,7 @@ export default function InvestPage() {
 
                                         <button
                                             key={type}
-                                            onClick={() => setInvestmentType(type)}
+                                            onClick={() => updateInvestmentType(type)}
                                             className={`py-3 rounded-xl border transition ${selected
                                                 ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
                                                 : 'border-zinc-700 hover:border-green-400'
@@ -277,7 +229,11 @@ export default function InvestPage() {
                         <button
                             onClick={leaveInvesting}
                             disabled={leaving}
-                            className="w-full py-3 rounded-xl border border-red-500 text-red-400 hover:shadow-[0_0_16px_rgba(239,68,68,0.6)] transition"
+                            className="
+                            w-full py-3 rounded-xl border border-red-500 text-red-400
+                            hover:shadow-[0_0_16px_rgba(239,68,68,0.6)]
+                            transition
+                            "
                         >
                             {leaving ? 'Leaving...' : 'Opt Out of Investing'}
                         </button>
@@ -291,22 +247,5 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
-    )
-}
-
-function Feature({ title, description }: { title: string; description: string }) {
-
-    return (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.3)]">
-
-            <h3 className="text-lg font-semibold mb-2 text-green-400">
-                {title}
-            </h3>
-
-            <p className="text-zinc-400 text-sm leading-relaxed">
-                {description}
-            </p>
-
-        </div>
     )
 }
