@@ -5,15 +5,6 @@ import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
 
-import {
-    ResponsiveContainer,
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    Tooltip
-} from 'recharts'
-
 export default function InvestPage() {
 
     const STARTING_CAPITAL = 100
@@ -127,14 +118,6 @@ export default function InvestPage() {
     const gain = portfolioValue - STARTING_CAPITAL
     const percent = ((gain / STARTING_CAPITAL) * 100).toFixed(2)
 
-    const chartData = [
-        { month: 'Start', value: 100 },
-        { month: 'Month 1', value: 102 },
-        { month: 'Month 2', value: 106 },
-        { month: 'Month 3', value: 111 },
-        { month: 'Month 4', value: 118 }
-    ]
-
     if (loading) {
         return (
             <div className="min-h-screen bg-black text-white px-6 pt-14">
@@ -193,71 +176,45 @@ export default function InvestPage() {
 
                             <Feature
                                 title="Correct Picks Invest"
-                                description="Winning predictions grow your savings automatically."
+                                description="Winning predictions automatically move funds into your investment account."
                             />
 
                             <Feature
                                 title="Incorrect Picks Return"
-                                description="Lose the pick, keep the money."
+                                description="If your prediction is wrong, your original money simply returns to your balance."
                             />
 
                         </section>
 
-                        {/* EXAMPLE */}
-
-                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-20">
-
-                            <h2 className="text-2xl font-semibold mb-4 text-green-400">
-                                Example Investment
-                            </h2>
-
-                            <p className="text-zinc-400 mb-4">
-                                Washington Spirit vs Portland Thorns
-                            </p>
-
-                            <p className="text-zinc-500 text-sm">
-                                Pick Washington — Invest $10
-                            </p>
-
-                        </section>
-
-                        {/* GRAPH */}
+                        {/* HOW IT WORKS */}
 
                         <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
 
                             <h2 className="text-2xl font-semibold mb-6 text-green-400">
-                                Example Portfolio Growth
+                                How It Works
                             </h2>
 
-                            <div className="h-40">
+                            <div className="space-y-4 text-zinc-400">
 
-                                <ResponsiveContainer width="100%" height="100%">
+                                <p>
+                                    Example match:
+                                </p>
 
-                                    <AreaChart data={chartData}>
+                                <p className="text-zinc-300 font-medium">
+                                    Washington Spirit vs Portland Thorns
+                                </p>
 
-                                        <defs>
-                                            <linearGradient id="growth" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.7} />
-                                                <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
+                                <div className="space-y-2 text-sm">
 
-                                        <XAxis dataKey="month" stroke="#888" />
-                                        <YAxis stroke="#888" />
+                                    <p>1️⃣ You predict <span className="text-green-400">Washington Spirit</span></p>
 
-                                        <Tooltip />
+                                    <p>2️⃣ You allocate <span className="text-green-400">$10</span> to the prediction</p>
 
-                                        <Area
-                                            type="monotone"
-                                            dataKey="value"
-                                            stroke="#4ade80"
-                                            strokeWidth={3}
-                                            fill="url(#growth)"
-                                        />
+                                    <p>3️⃣ If your pick is correct → <span className="text-green-400">$10 is invested</span></p>
 
-                                    </AreaChart>
+                                    <p>4️⃣ If your pick is incorrect → <span className="text-zinc-300">$10 returns to your balance</span></p>
 
-                                </ResponsiveContainer>
+                                </div>
 
                             </div>
 
@@ -306,8 +263,8 @@ export default function InvestPage() {
                                             key={type}
                                             onClick={() => setInvestmentType(type)}
                                             className={`py-3 rounded-xl border transition ${selected
-                                                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
-                                                    : 'border-zinc-700 hover:border-green-400'
+                                                ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
+                                                : 'border-zinc-700 hover:border-green-400'
                                                 }`}
                                         >
                                             {type}
