@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
@@ -9,6 +9,7 @@ import BottomNav from '@/components/BottomNav'
 export default function InvestPage() {
 
     const pathname = usePathname()
+    const router = useRouter()
 
     const STARTING_CAPITAL = 100
 
@@ -122,6 +123,11 @@ export default function InvestPage() {
             .from('user_investment_accounts')
             .update({ account_type: type })
             .eq('user_id', user.id)
+
+        // NEW: route HYSA users to investment picks page
+        if (type === 'HYSA') {
+            router.push('/invest-picks')
+        }
     }
 
     const portfolioValue = available + invested
@@ -144,33 +150,31 @@ export default function InvestPage() {
 
                 {!joined && (
 
-                    <>
-                        <section className="text-center mb-16">
+                    <section className="text-center mb-16">
 
-                            <motion.h1
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4 }}
-                                className="text-4xl md:text-6xl font-bold mb-6"
-                            >
-                                Bet Against Yourself
-                            </motion.h1>
+                        <motion.h1
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="text-4xl md:text-6xl font-bold mb-6"
+                        >
+                            Bet Against Yourself
+                        </motion.h1>
 
-                            <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-                                An optional investing layer where correct picks invest funds and
-                                incorrect picks return your original money.
-                            </p>
+                        <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+                            An optional investing layer where correct picks invest funds and
+                            incorrect picks return your original money.
+                        </p>
 
-                            <button
-                                onClick={joinInvesting}
-                                disabled={joining}
-                                className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
-                            >
-                                {joining ? 'Joining...' : 'Join Investing'}
-                            </button>
+                        <button
+                            onClick={joinInvesting}
+                            disabled={joining}
+                            className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+                        >
+                            {joining ? 'Joining...' : 'Join Investing'}
+                        </button>
 
-                        </section>
-                    </>
+                    </section>
                 )}
 
                 {joined && (
@@ -210,9 +214,9 @@ export default function InvestPage() {
                                         <button
                                             key={type}
                                             onClick={() => updateInvestmentType(type)}
-                                            className={`py-3 rounded-xl border transition ${selected
-                                                ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.5)]'
-                                                : 'border-zinc-700 hover:border-green-400'
+                                            className={`py-3 rounded-xl border font-semibold transition ${selected
+                                                    ? 'border-green-400 text-green-300 shadow-[0_0_16px_rgba(74,222,128,0.7)]'
+                                                    : 'border-zinc-700 hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
                                                 }`}
                                         >
                                             {type}
@@ -223,8 +227,6 @@ export default function InvestPage() {
                                 })}
 
                             </div>
-
-                            {/* DESCRIPTORS */}
 
                             <div className="mt-4 space-y-2 text-sm text-zinc-400">
 
@@ -247,11 +249,7 @@ export default function InvestPage() {
                         <button
                             onClick={leaveInvesting}
                             disabled={leaving}
-                            className="
-                            w-full py-3 rounded-xl border border-red-500 text-red-400
-                            hover:shadow-[0_0_16px_rgba(239,68,68,0.6)]
-                            transition
-                            "
+                            className="w-full py-3 rounded-xl border border-red-500 text-red-400 hover:shadow-[0_0_16px_rgba(239,68,68,0.6)] transition"
                         >
                             {leaving ? 'Leaving...' : 'Opt Out of Investing'}
                         </button>
