@@ -29,8 +29,6 @@ export default function InvestPage() {
 
     async function initialize() {
 
-        setLoading(true)
-
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
@@ -146,33 +144,98 @@ export default function InvestPage() {
 
             <div className="relative max-w-4xl mx-auto">
 
+                {/* LANDING PAGE */}
+
                 {!joined && (
-                    <section className="text-center mb-16">
 
-                        <motion.h1
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                            className="text-4xl md:text-6xl font-bold mb-6"
-                        >
-                            Bet Against Yourself
-                        </motion.h1>
+                    <>
+                        <section className="text-center mb-16">
 
-                        <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
-                            An optional investing layer where correct picks invest funds and
-                            incorrect picks return your original money.
-                        </p>
+                            <motion.h1
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4 }}
+                                className="text-4xl md:text-6xl font-bold mb-6"
+                            >
+                                Bet Against Yourself
+                            </motion.h1>
 
-                        <button
-                            onClick={joinInvesting}
-                            disabled={joining}
-                            className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
-                        >
-                            {joining ? 'Joining...' : 'Join Investing'}
-                        </button>
+                            <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+                                An optional investing layer where correct picks invest funds and
+                                incorrect picks return your original money.
+                            </p>
 
-                    </section>
+                            <button
+                                onClick={joinInvesting}
+                                disabled={joining}
+                                className="bg-zinc-900 border border-green-400 text-green-300 font-semibold px-6 py-3 rounded-xl transition hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+                            >
+                                {joining ? 'Joining...' : 'Join Investing'}
+                            </button>
+
+                        </section>
+
+                        <div className="h-px w-full bg-gradient-to-r from-transparent via-green-400 to-transparent mb-16 opacity-40" />
+
+                        {/* FEATURES */}
+
+                        <section className="grid md:grid-cols-3 gap-8 mb-20">
+
+                            <Feature
+                                title="Make Your Picks"
+                                description="Continue predicting matches exactly as you do now."
+                            />
+
+                            <Feature
+                                title="Correct Picks Invest"
+                                description="Winning predictions automatically move funds into your investment account."
+                            />
+
+                            <Feature
+                                title="Incorrect Picks Return"
+                                description="If your prediction is wrong, your original money simply returns to your balance."
+                            />
+
+                        </section>
+
+                        {/* HOW IT WORKS */}
+
+                        <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+
+                            <h2 className="text-2xl font-semibold mb-6 text-green-400">
+                                How It Works
+                            </h2>
+
+                            <div className="space-y-4 text-zinc-400">
+
+                                <p>
+                                    Example match:
+                                </p>
+
+                                <p className="text-zinc-300 font-medium">
+                                    Washington Spirit vs Portland Thorns
+                                </p>
+
+                                <div className="space-y-2 text-sm">
+
+                                    <p>1️⃣ You predict <span className="text-green-400">Washington Spirit</span></p>
+
+                                    <p>2️⃣ You allocate <span className="text-green-400">$10</span> to the prediction</p>
+
+                                    <p>3️⃣ If your pick is correct → <span className="text-green-400">$10 is invested</span></p>
+
+                                    <p>4️⃣ If your pick is incorrect → <span className="text-zinc-300">$10 returns to your balance</span></p>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+                    </>
                 )}
+
+                {/* DASHBOARD */}
 
                 {joined && (
 
@@ -244,5 +307,23 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
+
+    )
+}
+
+function Feature({ title, description }: { title: string; description: string }) {
+
+    return (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 transition hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.3)]">
+
+            <h3 className="text-lg font-semibold mb-2 text-green-400">
+                {title}
+            </h3>
+
+            <p className="text-zinc-400 text-sm leading-relaxed">
+                {description}
+            </p>
+
+        </div>
     )
 }
