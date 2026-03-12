@@ -32,6 +32,12 @@ export default function LeaguesPage() {
 
         const leagueIds = memberships.map(m => m.league_id)
 
+        if (leagueIds.length === 0) {
+            setLeagues([])
+            setLoading(false)
+            return
+        }
+
         const { data } = await supabase
             .from('leagues')
             .select('*')
@@ -42,6 +48,41 @@ export default function LeaguesPage() {
         setLoading(false)
     }
 
+    async function createLeague() {
+
+        const name = prompt('Enter league name')
+
+        if (!name) return
+
+        const { data: userData } = await supabase.auth.getUser()
+        const user = userData.user
+
+        if (!user) return
+
+        const { data: league, error } = await supabase
+            .from('leagues')
+            .insert({
+                name: name,
+                owner_id: user.id
+            })
+            .select()
+            .single()
+
+        if (error) {
+            console.error(error)
+            return
+        }
+
+        await supabase
+            .from('league_members')
+            .insert({
+                league_id: league.id,
+                user_id: user.id
+            })
+
+        loadLeagues()
+    }
+
     return (
 
         <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
@@ -49,6 +90,24 @@ export default function LeaguesPage() {
             <h1 className="text-3xl font-semibold mb-8">
                 Leagues
             </h1>
+
+            {/* CREATE LEAGUE BUTTON */}
+
+            <div className="mb-4">
+
+                <button
+                    onClick={createLeague}
+                    className="
+          w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
+          hover:border-green-400
+          hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+          transition
+          "
+                >
+                    Create League
+                </button>
+
+            </div>
 
             {/* GLOBAL LEADERBOARD BUTTON */}
 
