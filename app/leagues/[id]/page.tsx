@@ -248,7 +248,7 @@ export default function LeaguePage() {
             <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
 
                 <h2 className="text-lg font-semibold mb-4 text-green-400">
-                    Invite Friends
+                    Invite Friends to League
                 </h2>
 
                 {!showInvite && (
