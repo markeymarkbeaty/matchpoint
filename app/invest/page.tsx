@@ -71,37 +71,21 @@ export default function InvestPage() {
 
         if (!user) return
 
-        const { data: existing } = await supabase
+        const { error } = await supabase
             .from('user_investment_accounts')
-            .select('user_id')
-            .eq('user_id', user.id)
-            .maybeSingle()
+            .upsert({
+                user_id: user.id,
+                balance_available: STARTING_CAPITAL,
+                balance_invested: 0,
+                account_type: 'HYSA'
+            })
 
-        if (!existing) {
-
-            await supabase
-                .from('user_investment_accounts')
-                .insert({
-                    user_id: user.id,
-                    balance_available: STARTING_CAPITAL,
-                    balance_invested: 0,
-                    account_type: 'HYSA'
-                })
-
+        if (!error) {
+            setJoined(true)
+            setAvailable(STARTING_CAPITAL)
         } else {
-
-            await supabase
-                .from('user_investment_accounts')
-                .update({
-                    balance_available: STARTING_CAPITAL,
-                    balance_invested: 0
-                })
-                .eq('user_id', user.id)
-
+            console.error(error)
         }
-
-        setJoined(true)
-        setAvailable(STARTING_CAPITAL)
 
         setJoining(false)
     }
@@ -307,7 +291,6 @@ export default function InvestPage() {
             <BottomNav />
 
         </main>
-
     )
 }
 
