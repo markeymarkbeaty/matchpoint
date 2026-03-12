@@ -31,6 +31,7 @@ export default function DevProgressPage() {
                         <li>✔ Picks system</li>
                         <li>✔ Pick locking</li>
                         <li>✔ Match grouping by week</li>
+                        <li>✔ Correct / incorrect pick scoring</li>
 
                         <li>✔ Global leaderboard</li>
 
@@ -40,6 +41,11 @@ export default function DevProgressPage() {
                         <li>✔ League member leaderboard</li>
                         <li>✔ League invite code system</li>
                         <li>✔ Invite-to-league button flow</li>
+
+                        <li>✔ League UX improvements</li>
+                        <li>✔ Create League inline UI</li>
+                        <li>✔ Create League button moved to bottom</li>
+                        <li>✔ Invite Friends → Invite Friends to League</li>
 
                         <li>✔ Feedback system</li>
                         <li>✔ Feedback email alerts</li>
@@ -57,8 +63,11 @@ export default function DevProgressPage() {
                         <li>✔ Investing landing page</li>
                         <li>✔ Investing join / opt-out system</li>
                         <li>✔ Portfolio dashboard</li>
-                        <li>✔ Example investment UI</li>
-                        <li>✔ Portfolio example graph</li>
+                        <li>✔ HYSA / ETF investment selection</li>
+                        <li>✔ Investment descriptions + risk disclaimer</li>
+
+                        <li>✔ Invest page navigation bug fix</li>
+                        <li>✔ HYSA auto-selection bug fix</li>
 
                     </ul>
                 </div>
@@ -72,11 +81,11 @@ export default function DevProgressPage() {
 
                     <ul className="text-zinc-400 space-y-1">
 
-                        <li>• Investing mechanics integrated into Picks page</li>
+                        <li>• Investing mechanics integration with Picks page</li>
                         <li>• Real investment tracking</li>
-                        <li>• Portfolio value based on real events</li>
+                        <li>• Portfolio value based on prediction outcomes</li>
                         <li>• Investment history tracking</li>
-                        <li>• Portfolio graph from real data</li>
+                        <li>• Portfolio graph from real investment data</li>
 
                     </ul>
                 </div>
@@ -96,6 +105,9 @@ export default function DevProgressPage() {
                         <li>• Track invested vs returned funds</li>
                         <li>• Build investment event history table</li>
                         <li>• Generate real portfolio growth chart</li>
+
+                        <li>• Add MatchPoint soccer-themed logo to landing page</li>
+                        <li>• Improve landing page hero branding</li>
 
                         <li>• Move global leaderboard into Leagues section</li>
                         <li>• Reorder Home social section (Leagues → Friends → Invite)</li>
