@@ -224,6 +224,24 @@ export default function InvestPage() {
 
                             </div>
 
+                            {/* DESCRIPTORS */}
+
+                            <div className="mt-4 space-y-2 text-sm text-zinc-400">
+
+                                <p>
+                                    <span className="text-green-400 font-medium">HYSA:</span> High-yield savings account style growth with lower volatility and steadier returns.
+                                </p>
+
+                                <p>
+                                    <span className="text-green-400 font-medium">ETF:</span> Invests in a diversified market portfolio with higher long-term growth potential.
+                                </p>
+
+                                <p className="text-zinc-500 text-xs">
+                                    ETF investments are subject to market volatility and may lose value.
+                                </p>
+
+                            </div>
+
                         </div>
 
                         <button
