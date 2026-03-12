@@ -1,11 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
 
 export default function InvestPicksPage() {
+    return (
+        <Suspense>
+            <InvestPicksInner />
+        </Suspense>
+    )
+}
+
+function InvestPicksInner() {
 
     const params = useSearchParams()
     const mode = params.get('mode') || 'HYSA'
@@ -213,34 +221,6 @@ export default function InvestPicksPage() {
 
                 </div>
 
-                <div className="grid grid-cols-3 items-center mb-4">
-
-                    <div className="flex items-center gap-3">
-
-                        {match.home_logo && (
-                            <img src={match.home_logo} className="w-9 h-9 object-contain" />
-                        )}
-
-                        <span className="font-semibold">{match.home_team}</span>
-
-                    </div>
-
-                    <div className="text-center text-zinc-500 text-sm font-medium">
-                        VS
-                    </div>
-
-                    <div className="flex items-center justify-end gap-3">
-
-                        <span className="font-semibold">{match.away_team}</span>
-
-                        {match.away_logo && (
-                            <img src={match.away_logo} className="w-9 h-9 object-contain" />
-                        )}
-
-                    </div>
-
-                </div>
-
                 <div className="grid grid-cols-3 gap-3 mb-4">
 
                     {['home', 'draw', 'away'].map(team => {
@@ -252,7 +232,7 @@ export default function InvestPicksPage() {
                             <button
                                 key={team}
                                 disabled
-                                className={`relative py-2 rounded-xl border transition ${selected
+                                className={`relative py-2 rounded-xl border ${selected
                                         ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
                                         : 'border-zinc-700 text-white'
                                     }`}
@@ -289,7 +269,7 @@ export default function InvestPicksPage() {
                                 className={`px-4 py-2 rounded-xl border transition ${active
                                         ? 'border-green-400 text-green-300 shadow-[0_0_16px_rgba(74,222,128,0.7)]'
                                         : 'border-zinc-700 hover:border-green-400'
-                                    } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                    }`}
                             >
 
                                 ${amount}
