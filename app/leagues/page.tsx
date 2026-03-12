@@ -12,6 +12,10 @@ export default function LeaguesPage() {
     const [leagues, setLeagues] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
+    const [creating, setCreating] = useState(false)
+    const [leagueName, setLeagueName] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+
     useEffect(() => {
         loadLeagues()
     }, [])
@@ -50,9 +54,9 @@ export default function LeaguesPage() {
 
     async function createLeague() {
 
-        const name = prompt('Enter league name')
+        if (!leagueName.trim()) return
 
-        if (!name) return
+        setSubmitting(true)
 
         const { data: userData } = await supabase.auth.getUser()
         const user = userData.user
@@ -62,7 +66,7 @@ export default function LeaguesPage() {
         const { data: league, error } = await supabase
             .from('leagues')
             .insert({
-                name: name,
+                name: leagueName,
                 owner_id: user.id
             })
             .select()
@@ -70,6 +74,7 @@ export default function LeaguesPage() {
 
         if (error) {
             console.error(error)
+            setSubmitting(false)
             return
         }
 
@@ -79,6 +84,10 @@ export default function LeaguesPage() {
                 league_id: league.id,
                 user_id: user.id
             })
+
+        setLeagueName('')
+        setCreating(false)
+        setSubmitting(false)
 
         loadLeagues()
     }
@@ -91,24 +100,6 @@ export default function LeaguesPage() {
                 Leagues
             </h1>
 
-            {/* CREATE LEAGUE BUTTON */}
-
-            <div className="mb-4">
-
-                <button
-                    onClick={createLeague}
-                    className="
-          w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
-          hover:border-green-400
-          hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
-          transition
-          "
-                >
-                    Create League
-                </button>
-
-            </div>
-
             {/* GLOBAL LEADERBOARD BUTTON */}
 
             <div className="mb-8">
@@ -116,11 +107,11 @@ export default function LeaguesPage() {
                 <button
                     onClick={() => router.push('/leaderboard')}
                     className="
-          w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
-          hover:border-green-400
-          hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
-          transition
-          "
+                    w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
+                    hover:border-green-400
+                    hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+                    transition
+                    "
                 >
                     Global Leaderboard
                 </button>
@@ -133,7 +124,7 @@ export default function LeaguesPage() {
                 </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-4 mb-10">
 
                 {leagues.map((league) => (
 
@@ -141,11 +132,11 @@ export default function LeaguesPage() {
                         key={league.id}
                         onClick={() => router.push(`/leagues/${league.id}`)}
                         className="
-            w-full bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-left
-            hover:border-green-400
-            hover:shadow-[0_0_12px_rgba(74,222,128,0.5)]
-            transition
-            "
+                        w-full bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-left
+                        hover:border-green-400
+                        hover:shadow-[0_0_12px_rgba(74,222,128,0.5)]
+                        transition
+                        "
                     >
 
                         <div className="font-semibold">
@@ -155,6 +146,58 @@ export default function LeaguesPage() {
                     </button>
 
                 ))}
+
+            </div>
+
+            {/* CREATE LEAGUE SECTION */}
+
+            <div className="mt-6">
+
+                {!creating && (
+
+                    <button
+                        onClick={() => setCreating(true)}
+                        className="
+                        w-full border border-green-400 text-green-300 rounded-xl py-3
+                        hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+                        transition
+                        "
+                    >
+                        Create League
+                    </button>
+
+                )}
+
+                {creating && (
+
+                    <div className="space-y-3">
+
+                        <input
+                            type="text"
+                            placeholder="League name"
+                            value={leagueName}
+                            onChange={(e) => setLeagueName(e.target.value)}
+                            className="
+                            w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
+                            focus:outline-none focus:border-green-400
+                            "
+                        />
+
+                        <button
+                            onClick={createLeague}
+                            disabled={submitting}
+                            className="
+                            w-full bg-zinc-900 border border-green-400 text-green-300 rounded-xl py-3
+                            hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+                            transition
+                            "
+                        >
+                            {submitting ? 'Creating...' : 'Create'}
+                        </button>
+
+                    </div>
+
+                )}
 
             </div>
 
