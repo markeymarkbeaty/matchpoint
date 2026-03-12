@@ -43,19 +43,27 @@ export default function HomePage() {
 
         <section className="text-center mb-16">
 
-          {/* MatchPoint Logo */}
+          {/* Logo Container */}
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="flex justify-center mb-8"
+            transition={{ duration: 0.6 }}
+            className="relative flex justify-center mb-10"
           >
+
+            {/* Glow backdrop */}
+
+            <div className="absolute w-52 h-52 md:w-72 md:h-72 bg-green-500/20 blur-3xl rounded-full" />
+
+            {/* Logo */}
+
             <img
               src="/matchpoint-logo.png"
               alt="MatchPoint Logo"
-              className="w-40 md:w-56 drop-shadow-[0_0_18px_rgba(74,222,128,0.35)]"
+              className="relative w-40 md:w-56 mix-blend-screen drop-shadow-[0_0_25px_rgba(74,222,128,0.45)]"
             />
+
           </motion.div>
 
           <motion.h1
