@@ -32,6 +32,7 @@ export default function DevProgressPage() {
                         <li>✔ Pick locking</li>
                         <li>✔ Match grouping by week</li>
                         <li>✔ Correct / incorrect pick scoring</li>
+                        <li>✔ Picks state stabilization bug fix</li>
 
                         <li>✔ Global leaderboard</li>
 
@@ -59,15 +60,50 @@ export default function DevProgressPage() {
 
                         <li>✔ League database cleanup & stabilization</li>
 
-                        <li>✔ Investing tab</li>
+                        <li>✔ Landing page redesign</li>
+                        <li>✔ MatchPoint logo integration</li>
+                        <li>✔ Background logo styling</li>
+
                         <li>✔ Investing landing page</li>
                         <li>✔ Investing join / opt-out system</li>
                         <li>✔ Portfolio dashboard</li>
                         <li>✔ HYSA / ETF investment selection</li>
                         <li>✔ Investment descriptions + risk disclaimer</li>
 
-                        <li>✔ Invest page navigation bug fix</li>
-                        <li>✔ HYSA auto-selection bug fix</li>
+                        <li>✔ Investment account auto-creation via database trigger</li>
+                        <li>✔ RLS policy fixes for investment accounts</li>
+                        <li>✔ Signup database constraint fixes</li>
+
+                        <li>✔ Invest Picks page</li>
+                        <li>✔ Investment bet chips ($5 / $25 / $50 / $100)</li>
+                        <li>✔ Bet deselection / modification system</li>
+                        <li>✔ Investment balance tracking</li>
+                        <li>✔ Prediction investment persistence</li>
+
+                        <li>✔ Invest header showing bet mode + available funds</li>
+                        <li>✔ Sticky investment header</li>
+
+                        <li>✔ Import picks from Picks page into investment page</li>
+                        <li>✔ Display selected team with checkmark</li>
+
+                        <li>✔ Filter invest matches to next two matchweeks</li>
+                        <li>✔ Matchweek grouping for invest page</li>
+
+                        <li>✔ HYSA / ETF bet separation system</li>
+                        <li>✔ Account-type investment tracking in database</li>
+                        <li>✔ Unique constraint for (user_id, match_id, account_type)</li>
+
+                        <li>✔ Invest dashboard redesign</li>
+                        <li>✔ Wallet vs invested balance separation</li>
+                        <li>✔ Simplified investment dashboard layout</li>
+                        <li>✔ Investment type selector moved to top</li>
+
+                        <li>✔ Glowing HYSA / ETF bet chips on invest cards</li>
+                        <li>✔ Live chip updates when bet amount changes</li>
+                        <li>✔ Real-time available balance recalculation</li>
+
+                        <li>✔ Local development workflow (npm run dev)</li>
+                        <li>✔ Reduced Vercel deployment usage</li>
 
                     </ul>
                 </div>
@@ -81,11 +117,14 @@ export default function DevProgressPage() {
 
                     <ul className="text-zinc-400 space-y-1">
 
-                        <li>• Investing mechanics integration with Picks page</li>
-                        <li>• Real investment tracking</li>
-                        <li>• Portfolio value based on prediction outcomes</li>
-                        <li>• Investment history tracking</li>
-                        <li>• Portfolio graph from real investment data</li>
+                        <li>• Investment settlement logic</li>
+                        <li>• Correct pick → move funds to invested balance</li>
+                        <li>• Incorrect pick → return principal to wallet</li>
+
+                        <li>• Investment result processing when match results finalize</li>
+
+                        <li>• Returns analytics page (/invest/returns)</li>
+                        <li>• Investment performance tracking</li>
 
                     </ul>
                 </div>
@@ -99,15 +138,20 @@ export default function DevProgressPage() {
 
                     <ul className="text-zinc-400 space-y-1">
 
-                        <li>• Add optional investment toggle on Picks page</li>
-                        <li>• Allow selecting investment amount per pick</li>
-                        <li>• Store prediction investments in database</li>
+                        <li>• Automatic bet settlement engine</li>
+                        <li>• Investment event history table</li>
                         <li>• Track invested vs returned funds</li>
-                        <li>• Build investment event history table</li>
-                        <li>• Generate real portfolio growth chart</li>
 
-                        <li>• Add MatchPoint soccer-themed logo to landing page</li>
-                        <li>• Improve landing page hero branding</li>
+                        <li>• Build Returns analytics page</li>
+                        <li>• HYSA vs ETF return breakdown</li>
+                        <li>• Total portfolio performance metrics</li>
+
+                        <li>• Portfolio growth chart</li>
+                        <li>• Investment history timeline</li>
+
+                        <li>• Improve invest page UX</li>
+                        <li>• Active bets summary panel</li>
+                        <li>• Invested vs available funds display</li>
 
                         <li>• Move global leaderboard into Leagues section</li>
                         <li>• Reorder Home social section (Leagues → Friends → Invite)</li>

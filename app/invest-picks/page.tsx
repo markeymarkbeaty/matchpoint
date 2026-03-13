@@ -17,20 +17,37 @@ function InvestPicksInner() {
 
     const params = useSearchParams()
     const mode = params.get('mode') || 'HYSA'
+    const otherMode = mode === 'HYSA' ? 'ETF' : 'HYSA'
+
+    const [user, setUser] = useState<any>(null)
 
     const [matches, setMatches] = useState<any[]>([])
     const [picks, setPicks] = useState<any>({})
+
     const [bets, setBets] = useState<any>({})
+    const [hysaBets, setHysaBets] = useState<any>({})
+    const [etfBets, setEtfBets] = useState<any>({})
+
+    const [modeTotal, setModeTotal] = useState(0)
+
     const [available, setAvailable] = useState(0)
+    const [otherTotal, setOtherTotal] = useState(0)
 
     useEffect(() => {
         initialize()
     }, [])
 
     async function initialize() {
+
+        const { data } = await supabase.auth.getUser()
+
+        if (!data?.user) return
+
+        setUser(data.user)
+
         await loadMatches()
-        await loadPicks()
-        await loadBalanceAndBets()
+        await loadPicks(data.user.id)
+        await loadBalanceAndBets(data.user.id)
     }
 
     async function loadMatches() {
@@ -43,16 +60,12 @@ function InvestPicksInner() {
         if (data) setMatches(data)
     }
 
-    async function loadPicks() {
-
-        const { data: userData } = await supabase.auth.getUser()
-        const user = userData.user
-        if (!user) return
+    async function loadPicks(userId: string) {
 
         const { data } = await supabase
             .from('picks')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
 
         const map: any = {}
 
@@ -63,42 +76,65 @@ function InvestPicksInner() {
         setPicks(map)
     }
 
-    async function loadBalanceAndBets() {
-
-        const { data: userData } = await supabase.auth.getUser()
-        const user = userData.user
-        if (!user) return
+    async function loadBalanceAndBets(userId: string) {
 
         const { data: account } = await supabase
             .from('user_investment_accounts')
             .select('balance_available')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
             .single()
 
         const baseBalance = account?.balance_available || 0
 
-        const { data: betData } = await supabase
+        const { data: allBets } = await supabase
             .from('prediction_investments')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
 
-        const betMap: any = {}
         let totalBet = 0
+        let otherModeTotal = 0
+        let currentModeTotal = 0
 
-        betData?.forEach(b => {
-            betMap[b.match_id] = b.amount
-            totalBet += Number(b.amount)
+        const hysaMap: any = {}
+        const etfMap: any = {}
+
+        allBets?.forEach(b => {
+
+            const amt = Number(b.amount)
+
+            totalBet += amt
+
+            if (b.account_type === 'HYSA') {
+                hysaMap[b.match_id] = amt
+            }
+
+            if (b.account_type === 'ETF') {
+                etfMap[b.match_id] = amt
+            }
+
+            if (b.account_type === mode) {
+                currentModeTotal += amt
+            }
+
+            if (b.account_type === otherMode) {
+                otherModeTotal += amt
+            }
+
         })
 
-        setBets(betMap)
+        setHysaBets(hysaMap)
+        setEtfBets(etfMap)
 
+        setBets(mode === 'HYSA' ? hysaMap : etfMap)
+
+        setModeTotal(currentModeTotal)
+
+        setOtherTotal(otherModeTotal)
         setAvailable(baseBalance - totalBet)
     }
 
     async function toggleBet(matchId: string, amount: number) {
 
-        const { data: userData } = await supabase.auth.getUser()
-        const user = userData.user
         if (!user) return
 
         const current = bets[matchId] || 0
@@ -111,10 +147,22 @@ function InvestPicksInner() {
                 .delete()
                 .eq('user_id', user.id)
                 .eq('match_id', matchId)
+                .eq('account_type', mode)
 
             const updated = { ...bets }
             delete updated[matchId]
             setBets(updated)
+
+            // 🔧 UPDATE CHIP STATE
+            if (mode === 'HYSA') {
+                const updatedHysa = { ...hysaBets }
+                delete updatedHysa[matchId]
+                setHysaBets(updatedHysa)
+            } else {
+                const updatedEtf = { ...etfBets }
+                delete updatedEtf[matchId]
+                setEtfBets(updatedEtf)
+            }
 
             balance += amount
             setAvailable(balance)
@@ -129,18 +177,37 @@ function InvestPicksInner() {
 
         await supabase
             .from('prediction_investments')
-            .upsert({
-                user_id: user.id,
-                match_id: matchId,
-                pick_id: pick.id,
-                amount,
-                status: 'pending'
-            })
+            .upsert(
+                {
+                    user_id: user.id,
+                    match_id: matchId,
+                    pick_id: pick.id,
+                    amount,
+                    account_type: mode,
+                    status: 'pending'
+                },
+                {
+                    onConflict: 'user_id,match_id,account_type'
+                }
+            )
 
         setBets({
             ...bets,
             [matchId]: amount
         })
+
+        // 🔧 UPDATE CHIP STATE
+        if (mode === 'HYSA') {
+            setHysaBets({
+                ...hysaBets,
+                [matchId]: amount
+            })
+        } else {
+            setEtfBets({
+                ...etfBets,
+                [matchId]: amount
+            })
+        }
 
         if (current) balance += current
         balance -= amount
@@ -161,46 +228,19 @@ function InvestPicksInner() {
         })
     }
 
-    function getMatchWeek(dateString: string) {
-
-        const SEASON_START = new Date('2026-03-15')
-
-        const matchDate = new Date(dateString)
-
-        const diff = matchDate.getTime() - SEASON_START.getTime()
-
-        const week = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
-
-        return Math.max(1, week)
-    }
-
     const now = new Date()
 
     const upcomingMatches = matches.filter(
         m => new Date(m.date) > now
     )
 
-    const groupedMatches = upcomingMatches.reduce((acc: any, match: any) => {
-
-        const week = getMatchWeek(match.date)
-
-        if (!acc[week]) acc[week] = []
-
-        acc[week].push(match)
-
-        return acc
-
-    }, {})
-
-    const nextWeeks = Object.keys(groupedMatches).slice(0, 2)
-
     function MatchCard(match: any) {
-
-        const kickoff = new Date(match.date)
-        const locked = new Date() >= kickoff
 
         const userPick = picks[match.id]?.selected_team
         const betAmount = bets[match.id]
+
+        const hysaBet = hysaBets[match.id] || 0
+        const etfBet = etfBets[match.id] || 0
 
         return (
 
@@ -212,49 +252,49 @@ function InvestPicksInner() {
                         {formatDate(match.date)}
                     </div>
 
-                    {match.stadium && (
-                        <div className="text-xs text-zinc-500 mt-1">
-                            {match.stadium}
-                            {match.city && ` — ${match.city}${match.state ? `, ${match.state}` : ''}`}
-                        </div>
-                    )}
+                </div>
+
+                <div className="grid grid-cols-3 items-center mb-4">
+
+                    <div className="flex items-center gap-2">
+                        {match.home_logo && (
+                            <img src={match.home_logo} className="w-8 h-8" />
+                        )}
+                        {match.home_team}
+                    </div>
+
+                    <div className="text-center text-zinc-500">VS</div>
+
+                    <div className="flex items-center justify-end gap-2">
+                        {match.away_team}
+                        {match.away_logo && (
+                            <img src={match.away_logo} className="w-8 h-8" />
+                        )}
+                    </div>
 
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                {(hysaBet > 0 || etfBet > 0) && (
 
-                    {['home', 'draw', 'away'].map(team => {
+                    <div className="flex justify-center gap-3 mb-4">
 
-                        const selected = userPick === team
+                        {hysaBet > 0 && (
+                            <div className="px-3 py-1 rounded-full text-xs border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]">
+                                HYSA ${hysaBet.toFixed(2)}
+                            </div>
+                        )}
 
-                        return (
+                        {etfBet > 0 && (
+                            <div className="px-3 py-1 rounded-full text-xs border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]">
+                                ETF ${etfBet.toFixed(2)}
+                            </div>
+                        )}
 
-                            <button
-                                key={team}
-                                disabled
-                                className={`relative py-2 rounded-xl border ${selected
-                                        ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                                        : 'border-zinc-700 text-white'
-                                    }`}
-                            >
+                    </div>
 
-                                {team.charAt(0).toUpperCase() + team.slice(1)}
+                )}
 
-                                {selected && (
-                                    <span className="absolute right-2 top-1 text-sm text-green-300">
-                                        ✓
-                                    </span>
-                                )}
-
-                            </button>
-
-                        )
-
-                    })}
-
-                </div>
-
-                <div className="flex gap-3">
+                <div className="flex gap-3 justify-center">
 
                     {[5, 25, 50, 100].map(amount => {
 
@@ -264,16 +304,13 @@ function InvestPicksInner() {
 
                             <button
                                 key={amount}
-                                disabled={locked || !userPick}
                                 onClick={() => toggleBet(match.id, amount)}
-                                className={`px-4 py-2 rounded-xl border transition ${active
-                                        ? 'border-green-400 text-green-300 shadow-[0_0_16px_rgba(74,222,128,0.7)]'
-                                        : 'border-zinc-700 hover:border-green-400'
+                                className={`px-4 py-2 rounded-xl border ${active
+                                    ? 'border-green-400 text-green-300 shadow-[0_0_16px_rgba(74,222,128,0.7)]'
+                                    : 'border-zinc-700 hover:border-green-400'
                                     }`}
                             >
-
                                 ${amount}
-
                             </button>
 
                         )
@@ -291,43 +328,35 @@ function InvestPicksInner() {
 
         <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-            <div className="sticky top-0 bg-black pb-6 z-40">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8 flex justify-between">
 
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex justify-between items-center">
-
-                    <div>
-                        <div className="text-xs text-zinc-500">Bet Mode</div>
-                        <div className="text-green-400 font-semibold text-lg">{mode}</div>
+                <div>
+                    <div className="text-xs text-zinc-500">Bet Mode</div>
+                    <div className="text-green-400 font-semibold">{mode}</div>
+                    <div className="text-xs text-zinc-500">
+                        ${modeTotal.toFixed(2)} currently bet
                     </div>
+                </div>
 
-                    <div className="text-right">
-                        <div className="text-xs text-zinc-500">Available</div>
-                        <div className="text-green-400 font-bold text-xl">
-                            ${available.toFixed(2)}
-                        </div>
+                <div className="text-right">
+                    <div className="text-xs text-zinc-500">Available</div>
+                    <div className="text-green-400 font-bold">
+                        ${available.toFixed(2)}
                     </div>
-
+                    <div className="text-xs text-zinc-500">
+                        ({otherMode}: ${otherTotal.toFixed(2)})
+                    </div>
                 </div>
 
             </div>
 
-            {nextWeeks.map((week) => (
-                <div key={week}>
+            <div className="space-y-6">
 
-                    <h2 className="text-lg font-semibold text-zinc-400 mb-4">
-                        Upcoming Matchweek {week}
-                    </h2>
+                {upcomingMatches.map(match => (
+                    <MatchCard key={match.id} {...match} />
+                ))}
 
-                    <div className="space-y-6 mb-10">
-
-                        {groupedMatches[week].map((match: any) => (
-                            <MatchCard key={match.id} {...match} />
-                        ))}
-
-                    </div>
-
-                </div>
-            ))}
+            </div>
 
             <BottomNav />
 

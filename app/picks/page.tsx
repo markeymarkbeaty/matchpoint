@@ -4,11 +4,25 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
 
-export default function PicksPage() {
+type Match = {
+  id: string
+  home_team: string
+  away_team: string
+  home_logo: string | null
+  away_logo: string | null
+  stadium: string | null
+  city: string | null
+  state: string | null
+  date: string
+  result: string | null
+}
 
-  const [matches, setMatches] = useState<any[]>([])
-  const [picks, setPicks] = useState<any>({})
-  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
+type PickMap = Record<string, string>
+
+export default function PicksPage() {
+  const [matches, setMatches] = useState<Match[]>([])
+  const [picks, setPicks] = useState<PickMap>({})
+  const [tab] = useState<'upcoming' | 'past'>('upcoming')
 
   useEffect(() => {
     loadMatches()
@@ -16,30 +30,30 @@ export default function PicksPage() {
   }, [])
 
   async function loadMatches() {
-
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('matches')
       .select('*')
       .order('date', { ascending: true })
 
-    if (data) setMatches(data)
+    if (!error && data) setMatches(data)
   }
 
   async function loadPicks() {
-
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
 
     if (!user) return
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('picks')
       .select('*')
       .eq('user_id', user.id)
 
-    const map: any = {}
+    if (error || !data) return
 
-    data?.forEach((p) => {
+    const map: PickMap = {}
+
+    data.forEach((p) => {
       map[p.match_id] = p.selected_team
     })
 
@@ -47,7 +61,6 @@ export default function PicksPage() {
   }
 
   async function makePick(matchId: string, team: string, matchDate: string) {
-
     const now = new Date()
     const kickoff = new Date(matchDate)
 
@@ -61,37 +74,45 @@ export default function PicksPage() {
     const currentPick = picks[matchId]
 
     if (currentPick === team) {
-
-      await supabase
+      const { error } = await supabase
         .from('picks')
         .delete()
         .eq('user_id', user.id)
         .eq('match_id', matchId)
 
-      const updated = { ...picks }
-      delete updated[matchId]
+      if (error) return
 
-      setPicks(updated)
+      setPicks((prev) => {
+        const updated = { ...prev }
+        delete updated[matchId]
+        return updated
+      })
 
       return
     }
 
-    await supabase
+    const { error } = await supabase
       .from('picks')
-      .upsert({
-        user_id: user.id,
-        match_id: matchId,
-        selected_team: team
-      })
+      .upsert(
+        {
+          user_id: user.id,
+          match_id: matchId,
+          selected_team: team
+        },
+        {
+          onConflict: 'user_id,match_id'
+        }
+      )
 
-    setPicks({
-      ...picks,
+    if (error) return
+
+    setPicks((prev) => ({
+      ...prev,
       [matchId]: team
-    })
+    }))
   }
 
   function formatDate(dateString: string) {
-
     const date = new Date(dateString)
 
     return date.toLocaleString('en-US', {
@@ -104,33 +125,21 @@ export default function PicksPage() {
   }
 
   function getMatchWeek(dateString: string) {
-
     const SEASON_START = new Date('2026-03-15')
-
     const matchDate = new Date(dateString)
-
     const diff = matchDate.getTime() - SEASON_START.getTime()
-
     const week = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
-
     return Math.max(1, week)
   }
 
   const now = new Date()
 
-  const upcomingMatches = matches.filter(
-    (m) => new Date(m.date) > now
-  )
+  const upcomingMatches = matches.filter((m) => new Date(m.date) > now)
+  const pastMatches = matches.filter((m) => new Date(m.date) <= now)
 
-  const pastMatches = matches.filter(
-    (m) => new Date(m.date) <= now
-  )
+  const displayedMatches = tab === 'upcoming' ? upcomingMatches : pastMatches
 
-  const displayedMatches =
-    tab === 'upcoming' ? upcomingMatches : pastMatches
-
-  const groupedMatches = displayedMatches.reduce((acc: any, match: any) => {
-
+  const groupedMatches = displayedMatches.reduce((acc: Record<number, Match[]>, match) => {
     const week = getMatchWeek(match.date)
 
     if (!acc[week]) {
@@ -138,9 +147,7 @@ export default function PicksPage() {
     }
 
     acc[week].push(match)
-
     return acc
-
   }, {})
 
   function MatchCard({
@@ -154,8 +161,7 @@ export default function PicksPage() {
     state,
     date,
     result
-  }: any) {
-
+  }: Match) {
     const kickoff = new Date(date)
     const locked = new Date() >= kickoff
 
@@ -167,11 +173,8 @@ export default function PicksPage() {
       userPick === result
 
     return (
-
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-
         <div className="text-center mb-5">
-
           <div className="text-lg italic font-semibold text-zinc-300">
             {formatDate(date)}
           </div>
@@ -182,13 +185,10 @@ export default function PicksPage() {
               {city && ` — ${city}${state ? `, ${state}` : ''}`}
             </div>
           )}
-
         </div>
 
         <div className="grid grid-cols-3 items-center mb-4">
-
           <div className="flex items-center gap-3">
-
             {home_logo && (
               <img
                 src={home_logo}
@@ -200,7 +200,6 @@ export default function PicksPage() {
             <span className="font-semibold">
               {home_team}
             </span>
-
           </div>
 
           <div className="text-center text-zinc-500 text-sm font-medium">
@@ -208,7 +207,6 @@ export default function PicksPage() {
           </div>
 
           <div className="flex items-center justify-end gap-3">
-
             <span className="font-semibold">
               {away_team}
             </span>
@@ -220,40 +218,32 @@ export default function PicksPage() {
                 className="w-9 h-9 object-contain"
               />
             )}
-
           </div>
-
         </div>
 
         {locked && userPick && result && (
-
           <div
             className={`text-center text-sm mb-4 font-medium ${correct ? 'text-green-400' : 'text-red-400'
               }`}
           >
             {correct ? '✓ Correct Pick' : '✕ Incorrect Pick'}
           </div>
-
         )}
 
         <div className="grid grid-cols-3 gap-3">
-
           {['home', 'draw', 'away'].map((team) => {
-
             const selected = picks[id] === team
 
             return (
-
               <button
                 key={team}
                 disabled={locked}
                 onClick={() => makePick(id, team, date)}
                 className={`relative py-2 rounded-xl border transition ${selected
-                  ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                  : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
+                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                    : 'border-zinc-700 text-white hover:border-green-400 hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]'
                   } ${locked ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
-
                 {team.charAt(0).toUpperCase() + team.slice(1)}
 
                 {selected && (
@@ -261,50 +251,35 @@ export default function PicksPage() {
                     ✓
                   </span>
                 )}
-
               </button>
-
             )
-
           })}
-
         </div>
-
       </div>
-
     )
   }
 
   return (
-
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
-
       <h1 className="text-3xl font-semibold mb-6">
         Picks
       </h1>
 
       {Object.keys(groupedMatches).map((week) => (
-
         <div key={week}>
-
           <h2 className="text-lg font-semibold text-zinc-400 mb-4">
             Matchweek {week}
           </h2>
 
           <div className="space-y-6 mb-10">
-
-            {groupedMatches[week].map((match: any) => (
+            {groupedMatches[Number(week)].map((match) => (
               <MatchCard key={match.id} {...match} />
             ))}
-
           </div>
-
         </div>
-
       ))}
 
       <BottomNav />
-
     </div>
   )
 }
