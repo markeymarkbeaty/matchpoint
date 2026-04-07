@@ -15,6 +15,7 @@ export default function LeaguePage() {
     const [leagueName, setLeagueName] = useState('')
     const [members, setMembers] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
     const [inviteCode, setInviteCode] = useState<string | null>(null)
     const [creatingInvite, setCreatingInvite] = useState(false)
@@ -23,7 +24,13 @@ export default function LeaguePage() {
     useEffect(() => {
         loadLeague()
         loadInvite()
+        loadUser()
     }, [])
+
+    async function loadUser() {
+        const { data: { user } } = await supabase.auth.getUser()
+        setCurrentUserId(user?.id || null)
+    }
 
     async function loadInvite() {
 
@@ -50,7 +57,10 @@ export default function LeaguePage() {
 
         const { data: { user } } = await supabase.auth.getUser()
 
-        if (!user) return
+        if (!user) {
+            setCreatingInvite(false)
+            return
+        }
 
         const code = generateCode()
 
@@ -91,69 +101,18 @@ export default function LeaguePage() {
             setLeagueName(league.name)
         }
 
-        const { data: memberRows } = await supabase
-            .from('league_members')
-            .select('user_id')
-            .eq('league_id', leagueId)
+        try {
 
-        if (!memberRows || memberRows.length === 0) {
+            const res = await fetch(`/api/league-leaderboard?leagueId=${leagueId}`)
+            const data = await res.json()
+
+            setMembers(data || [])
+
+        } catch (err) {
+            console.error('Failed to load league leaderboard', err)
             setMembers([])
-            setLoading(false)
-            return
         }
 
-        const userIds = memberRows.map(m => m.user_id)
-
-        const { data: users } = await supabase
-            .from('profiles')
-            .select('id, username')
-            .in('id', userIds)
-
-        const usernameMap: any = {}
-
-        users?.forEach(u => {
-            usernameMap[u.id] = u.username
-        })
-
-        const { data: picks } = await supabase
-            .from('picks')
-            .select('user_id, is_correct')
-            .in('user_id', userIds)
-
-        const stats: any = {}
-
-        picks?.forEach(p => {
-
-            if (!stats[p.user_id]) {
-                stats[p.user_id] = { wins: 0, total: 0 }
-            }
-
-            stats[p.user_id].total++
-
-            if (p.is_correct) stats[p.user_id].wins++
-
-        })
-
-        const leaderboard = userIds.map(id => {
-
-            const s = stats[id] || { wins: 0, total: 0 }
-
-            const accuracy =
-                s.total > 0
-                    ? Math.round((s.wins / s.total) * 100)
-                    : 0
-
-            return {
-                username: usernameMap[id] || 'User',
-                wins: s.wins,
-                accuracy
-            }
-
-        })
-
-        leaderboard.sort((a, b) => b.wins - a.wins)
-
-        setMembers(leaderboard)
         setLoading(false)
     }
 
@@ -178,14 +137,14 @@ export default function LeaguePage() {
         if (rank === 1) return '🥈'
         if (rank === 2) return '🥉'
 
-        return `${rank + 1}.`
+        return null
     }
 
     return (
 
         <div className="min-h-screen bg-black text-white px-5 pt-14 pb-32">
 
-            <h1 className="text-3xl font-semibold mb-10">
+            <h1 className="text-3xl font-semibold mb-6">
                 {leagueName || 'League'}
             </h1>
 
@@ -197,122 +156,132 @@ export default function LeaguePage() {
 
             <div className="space-y-4 mb-12">
 
-                {members.map((member, index) => (
+                {members.map((member: any, index: number) => {
 
-                    <div
-                        key={index}
-                        className="
-                        rounded-2xl p-6 border bg-zinc-900 border-zinc-800
-                        hover:border-green-400
-                        hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
-                        transition
-                        "
-                    >
+                    const wins = member.wins || 0
+                    const losses = member.losses || 0
+                    const total = wins + losses
 
-                        <div className="flex justify-between items-center">
+                    const accuracy =
+                        total > 0
+                            ? Math.round((wins / total) * 100)
+                            : 0
 
-                            <div className="flex items-center gap-3">
+                    const isCurrentUser =
+                        member.user_id === currentUserId
 
-                                <span className="text-xl">
-                                    {medal(index)}
-                                </span>
+                    const medalIcon = medal(index)
 
-                                <span className="font-semibold">
-                                    {member.username}
-                                </span>
+                    return (
 
-                            </div>
+                        <div
+                            key={member.user_id || index}
+                            className={`
+                                rounded-2xl p-6 border transition
+                                hover:border-green-400 hover:shadow-[0_0_14px_rgba(74,222,128,0.25)]
+                                ${isCurrentUser ? 'bg-zinc-800 border-green-500' : 'bg-zinc-900 border-zinc-800'}
+                            `}
+                        >
 
-                            <div className="text-right">
+                            <div className="flex justify-between items-center">
 
-                                <div className="text-green-400 font-semibold">
-                                    {member.wins} Wins
+                                <div>
+
+                                    <p className="text-xs text-zinc-500 mb-1">
+                                        Rank #{index + 1}
+                                    </p>
+
+                                    <p className="text-lg font-semibold flex items-center gap-2">
+
+                                        {medalIcon && (
+                                            <span className="text-xl">
+                                                {medalIcon}
+                                            </span>
+                                        )}
+
+                                        {member.username || 'User'}
+
+                                        {isCurrentUser && (
+                                            <span className="text-xs text-green-400 ml-2">
+                                                (You)
+                                            </span>
+                                        )}
+
+                                    </p>
+
+                                    <p className="text-sm text-zinc-300 mt-1">
+                                        {wins} correct picks, {losses} incorrect
+                                    </p>
+
                                 </div>
 
-                                <div className="text-xs text-zinc-500">
-                                    {member.accuracy}% Accuracy
+                                <div className="text-right">
+
+                                    <p className="text-2xl font-bold text-white">
+                                        {accuracy}%
+                                    </p>
+
+                                    <p className="text-xs text-zinc-500 mt-1">
+                                        Pick Accuracy
+                                    </p>
+
+                                    <p className="text-xs text-zinc-500">
+                                        {total} Picks
+                                    </p>
+
                                 </div>
 
                             </div>
 
                         </div>
 
-                    </div>
+                    )
 
-                ))}
+                })}
 
             </div>
 
-            {/* INVITE SECTION */}
+            {/* ✅ MOVED INVITE SECTION TO BOTTOM */}
 
-            <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="mb-6 space-y-3">
 
-                <h2 className="text-lg font-semibold mb-4 text-green-400">
-                    Invite Friends to League
-                </h2>
-
-                {!showInvite && (
-
-                    <button
-                        onClick={() => setShowInvite(true)}
-                        className="
-                        w-full py-3 rounded-xl border border-zinc-700
+                <button
+                    onClick={() => setShowInvite(!showInvite)}
+                    className="
+                        w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
                         hover:border-green-400
-                        hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
+                        hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
                         transition
-                        "
-                    >
-                        Show Invite Code
-                    </button>
-
-                )}
+                    "
+                >
+                    Invite to League
+                </button>
 
                 {showInvite && (
 
-                    <div className="space-y-4">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
 
                         {!inviteCode && (
-
                             <button
                                 onClick={createInvite}
                                 disabled={creatingInvite}
-                                className="
-                                w-full py-3 rounded-xl border border-zinc-700
-                                hover:border-green-400
-                                hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
-                                transition
-                                "
+                                className="w-full bg-black border border-zinc-700 rounded-lg py-2 hover:border-green-400"
                             >
-                                Generate Invite Code
+                                {creatingInvite ? 'Creating...' : 'Generate Invite Code'}
                             </button>
-
                         )}
 
                         {inviteCode && (
-
                             <>
-                                <div className="text-center">
-
-                                    <div className="text-zinc-400 text-sm mb-1">
-                                        Invite Code
-                                    </div>
-
-                                    <div className="text-2xl font-semibold tracking-widest">
-                                        {inviteCode}
-                                    </div>
-
+                                <div className="text-center text-lg font-semibold tracking-widest">
+                                    {inviteCode}
                                 </div>
 
                                 <button
                                     onClick={copyCode}
-                                    className="
-                                    w-full py-3 rounded-xl border border-zinc-700
-                                    hover:border-green-400
-                                    hover:shadow-[0_0_16px_rgba(74,222,128,0.5)]
-                                    transition
-                                    "
+                                    className="w-full bg-black border border-zinc-700 rounded-lg py-2 hover:border-green-400"
                                 >
-                                    Copy Invite Code
+                                    Copy Code
                                 </button>
                             </>
                         )}
@@ -322,17 +291,6 @@ export default function LeaguePage() {
                 )}
 
             </div>
-
-            <button
-                onClick={leaveLeague}
-                className="
-                w-full py-3 rounded-xl border border-red-500 text-red-400
-                hover:shadow-[0_0_16px_rgba(239,68,68,0.6)]
-                transition
-                "
-            >
-                Leave League
-            </button>
 
             <BottomNav />
 

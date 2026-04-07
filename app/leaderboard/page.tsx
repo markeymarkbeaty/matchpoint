@@ -7,10 +7,14 @@ import { createClient } from '@supabase/supabase-js'
 
 type Leader = {
   user_id: string
-  username: string
-  total_units: number
+  username: string | null
   wins: number
   losses: number
+}
+
+type Profile = {
+  id: string
+  username: string | null
 }
 
 const supabase = createClient(
@@ -21,6 +25,7 @@ const supabase = createClient(
 export default function LeaderboardPage() {
 
   const [leaders, setLeaders] = useState<Leader[]>([])
+  const [unranked, setUnranked] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
@@ -29,15 +34,24 @@ export default function LeaderboardPage() {
     async function load() {
 
       const { data: { user } } = await supabase.auth.getUser()
-
       setCurrentUserId(user?.id || null)
 
       const res = await fetch('/api/leaderboard')
       const data = await res.json()
-
       setLeaders(data || [])
-      setLoading(false)
 
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username')
+
+      const rankedIds = new Set((data || []).map((l: Leader) => l.user_id))
+
+      const unrankedUsers =
+        (profiles || []).filter(p => !rankedIds.has(p.id))
+
+      setUnranked(unrankedUsers)
+
+      setLoading(false)
     }
 
     load()
@@ -45,11 +59,9 @@ export default function LeaderboardPage() {
   }, [])
 
   function medal(rank: number) {
-
     if (rank === 0) return '🥇'
     if (rank === 1) return '🥈'
     if (rank === 2) return '🥉'
-
     return null
   }
 
@@ -57,48 +69,33 @@ export default function LeaderboardPage() {
 
     <div className="min-h-screen bg-black text-white px-5 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold tracking-tight mb-10">
+      <h1 className="text-3xl font-semibold tracking-tight mb-6">
         Global Leaderboard
       </h1>
 
       {loading && (
-
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
           Loading...
         </div>
-
       )}
 
-      {!loading && leaders.length === 0 && (
-
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-zinc-400">
-          No players yet.
-        </div>
-
-      )}
+      {/* ================= RANKED ================= */}
 
       <div className="space-y-4">
 
         {leaders.map((leader, index) => {
 
-          const units = Number(leader.total_units || 0)
+          const wins = leader.wins || 0
+          const losses = leader.losses || 0
+          const total = wins + losses
 
-          const totalBets = leader.wins + leader.losses
-
-          const winRate =
-            totalBets > 0
-              ? Math.round((leader.wins / totalBets) * 100)
+          const accuracy =
+            total > 0
+              ? Math.round((wins / total) * 100)
               : 0
 
           const isCurrentUser =
             leader.user_id === currentUserId
-
-          const unitsColor =
-            units > 0
-              ? 'text-green-400'
-              : units < 0
-                ? 'text-red-400'
-                : 'text-white'
 
           const medalIcon = medal(index)
 
@@ -126,13 +123,9 @@ export default function LeaderboardPage() {
 
                   <p className="text-lg font-semibold flex items-center gap-2">
 
-                    {medalIcon && (
-                      <span className="text-xl">
-                        {medalIcon}
-                      </span>
-                    )}
+                    {medalIcon && <span className="text-xl">{medalIcon}</span>}
 
-                    {leader.username}
+                    {leader.username || 'User'}
 
                     {isCurrentUser && (
                       <span className="text-xs text-green-400 ml-2">
@@ -142,21 +135,24 @@ export default function LeaderboardPage() {
 
                   </p>
 
+                  <p className="text-sm text-zinc-300 mt-1">
+                    {wins} correct picks, {losses} incorrect
+                  </p>
+
                 </div>
 
                 <div className="text-right">
 
-                  <p className={`text-xl font-semibold ${unitsColor}`}>
-                    {units > 0 ? '+' : ''}
-                    {units.toFixed(1)}
+                  <p className="text-2xl font-bold text-white">
+                    {accuracy}%
                   </p>
 
                   <p className="text-xs text-zinc-500 mt-1">
-                    {totalBets} Picks
+                    Pick Accuracy
                   </p>
 
                   <p className="text-xs text-zinc-500">
-                    {winRate}% Win Rate
+                    {total} Picks
                   </p>
 
                 </div>
@@ -170,6 +166,43 @@ export default function LeaderboardPage() {
         })}
 
       </div>
+
+      {/* ================= UNRANKED ================= */}
+
+      {unranked.length > 0 && (
+
+        <div className="mt-8">
+
+          <h2 className="text-lg font-semibold text-zinc-400 mb-1">
+            Unranked Players
+          </h2>
+
+          {/* ✅ Now styled as disclaimer */}
+          <p className="text-xs text-zinc-500 mb-4">
+            Predict 5 matches to appear on the ranked leaderboard.
+          </p>
+
+          <div className="space-y-3">
+
+            {unranked.map((user) => (
+
+              <div
+                key={user.id}
+                className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-zinc-400 flex justify-between"
+              >
+                <span>{user.username || 'User'}</span>
+                <span className="text-xs text-zinc-500">
+                  Not enough picks
+                </span>
+              </div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      )}
 
       <BottomNav />
 

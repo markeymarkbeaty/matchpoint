@@ -135,6 +135,13 @@ function InvestPicksInner() {
 
     async function toggleBet(matchId: string, amount: number) {
 
+        const pick = picks[matchId]
+
+        if (!pick) {
+            alert('You must make a pick on the Picks page before placing an investment bet.')
+            return
+        }
+
         if (!user) return
 
         const current = bets[matchId] || 0
@@ -153,7 +160,6 @@ function InvestPicksInner() {
             delete updated[matchId]
             setBets(updated)
 
-            // 🔧 UPDATE CHIP STATE
             if (mode === 'HYSA') {
                 const updatedHysa = { ...hysaBets }
                 delete updatedHysa[matchId]
@@ -171,9 +177,6 @@ function InvestPicksInner() {
         }
 
         if (balance < amount) return
-
-        const pick = picks[matchId]
-        if (!pick) return
 
         await supabase
             .from('prediction_investments')
@@ -196,7 +199,6 @@ function InvestPicksInner() {
             [matchId]: amount
         })
 
-        // 🔧 UPDATE CHIP STATE
         if (mode === 'HYSA') {
             setHysaBets({
                 ...hysaBets,
@@ -251,6 +253,22 @@ function InvestPicksInner() {
                     <div className="text-lg italic font-semibold text-zinc-300">
                         {formatDate(match.date)}
                     </div>
+
+                    {match.stadium && (
+                        <div className="text-xs text-zinc-500 mt-1">
+                            {match.stadium}
+                        </div>
+                    )}
+
+                    {userPick && (
+                        <div className="text-green-400 font-semibold mt-1">
+                            Your Pick: {userPick === 'home'
+                                ? match.home_team
+                                : userPick === 'away'
+                                    ? match.away_team
+                                    : 'Draw'}
+                        </div>
+                    )}
 
                 </div>
 

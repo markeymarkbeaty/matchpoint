@@ -21,6 +21,10 @@ export default function InvestPage() {
 
     const [investmentType, setInvestmentType] = useState('HYSA')
 
+    // NEW
+    const [hysaTotal, setHysaTotal] = useState(0)
+    const [etfTotal, setEtfTotal] = useState(0)
+
     useEffect(() => {
         initialize()
     }, [pathname])
@@ -54,13 +58,26 @@ export default function InvestPage() {
                 .eq('user_id', user.id)
 
             let invested = 0
+            let hysa = 0
+            let etf = 0
 
             bets?.forEach(b => {
-                invested += Number(b.amount)
+
+                const amt = Number(b.amount)
+
+                invested += amt
+
+                if (b.account_type === 'HYSA') hysa += amt
+                if (b.account_type === 'ETF') etf += amt
+
             })
 
             setTotalInvested(invested)
             setWallet(INITIAL_DEPOSIT - invested)
+
+            // NEW
+            setHysaTotal(hysa)
+            setEtfTotal(etf)
 
         }
 
@@ -130,16 +147,24 @@ export default function InvestPage() {
 
                             return (
 
-                                <button
-                                    key={type}
-                                    onClick={() => updateInvestmentType(type)}
-                                    className={`py-3 rounded-xl border ${selected
-                                        ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                                        : 'border-zinc-700 hover:border-green-400'
-                                        }`}
-                                >
-                                    {type}
-                                </button>
+                                <div key={type}>
+
+                                    <button
+                                        onClick={() => updateInvestmentType(type)}
+                                        className={`w-full py-3 rounded-xl border ${selected
+                                            ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                                            : 'border-zinc-700 hover:border-green-400'
+                                            }`}
+                                    >
+                                        {type}
+                                    </button>
+
+                                    {/* NEW */}
+                                    <div className="text-xs text-zinc-500 text-center mt-1">
+                                        ${type === 'HYSA' ? hysaTotal : etfTotal} currently bet
+                                    </div>
+
+                                </div>
 
                             )
 

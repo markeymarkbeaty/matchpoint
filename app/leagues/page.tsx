@@ -12,9 +12,15 @@ export default function LeaguesPage() {
     const [leagues, setLeagues] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
-    const [creating, setCreating] = useState(false)
+    // CREATE
+    const [showCreate, setShowCreate] = useState(false)
     const [leagueName, setLeagueName] = useState('')
-    const [submitting, setSubmitting] = useState(false)
+    const [creating, setCreating] = useState(false)
+
+    // JOIN
+    const [showJoin, setShowJoin] = useState(false)
+    const [inviteInput, setInviteInput] = useState('')
+    const [joining, setJoining] = useState(false)
 
     useEffect(() => {
         loadLeagues()
@@ -25,14 +31,22 @@ export default function LeaguesPage() {
         const { data: userData } = await supabase.auth.getUser()
         const user = userData.user
 
-        if (!user) return
+        if (!user) {
+            setLeagues([])
+            setLoading(false)
+            return
+        }
 
         const { data: memberships } = await supabase
             .from('league_members')
             .select('league_id')
             .eq('user_id', user.id)
 
-        if (!memberships) return
+        if (!memberships) {
+            setLeagues([])
+            setLoading(false)
+            return
+        }
 
         const leagueIds = memberships.map(m => m.league_id)
 
@@ -56,12 +70,15 @@ export default function LeaguesPage() {
 
         if (!leagueName.trim()) return
 
-        setSubmitting(true)
+        setCreating(true)
 
         const { data: userData } = await supabase.auth.getUser()
         const user = userData.user
 
-        if (!user) return
+        if (!user) {
+            setCreating(false)
+            return
+        }
 
         const { data: league, error } = await supabase
             .from('leagues')
@@ -74,7 +91,7 @@ export default function LeaguesPage() {
 
         if (error) {
             console.error(error)
-            setSubmitting(false)
+            setCreating(false)
             return
         }
 
@@ -86,8 +103,68 @@ export default function LeaguesPage() {
             })
 
         setLeagueName('')
+        setShowCreate(false)
         setCreating(false)
-        setSubmitting(false)
+
+        loadLeagues()
+    }
+
+    async function joinLeague() {
+
+        if (!inviteInput.trim()) return
+
+        setJoining(true)
+
+        const { data: userData } = await supabase.auth.getUser()
+        const user = userData.user
+
+        if (!user) {
+            setJoining(false)
+            return
+        }
+
+        const { data: invite } = await supabase
+            .from('league_invites')
+            .select('league_id')
+            .eq('invite_code', inviteInput.toUpperCase())
+            .maybeSingle()
+
+        if (!invite) {
+            alert('Invalid invite code')
+            setJoining(false)
+            return
+        }
+
+        const { data: existing } = await supabase
+            .from('league_members')
+            .select('league_id')
+            .eq('league_id', invite.league_id)
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+        if (existing) {
+            alert('You are already in this league')
+            setJoining(false)
+            return
+        }
+
+        const { error } = await supabase
+            .from('league_members')
+            .insert({
+                league_id: invite.league_id,
+                user_id: user.id
+            })
+
+        if (error) {
+            console.error(error)
+            alert('Error joining league')
+            setJoining(false)
+            return
+        }
+
+        setInviteInput('')
+        setShowJoin(false)
+        setJoining(false)
 
         loadLeagues()
     }
@@ -100,18 +177,18 @@ export default function LeaguesPage() {
                 Leagues
             </h1>
 
-            {/* GLOBAL LEADERBOARD BUTTON */}
+            {/* GLOBAL */}
 
             <div className="mb-8">
 
                 <button
                     onClick={() => router.push('/leaderboard')}
                     className="
-                    w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
-                    hover:border-green-400
-                    hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
-                    transition
-                    "
+          w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
+          hover:border-green-400
+          hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+          transition
+          "
                 >
                     Global Leaderboard
                 </button>
@@ -132,11 +209,11 @@ export default function LeaguesPage() {
                         key={league.id}
                         onClick={() => router.push(`/leagues/${league.id}`)}
                         className="
-                        w-full bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-left
-                        hover:border-green-400
-                        hover:shadow-[0_0_12px_rgba(74,222,128,0.5)]
-                        transition
-                        "
+            w-full bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-left
+            hover:border-green-400
+            hover:shadow-[0_0_12px_rgba(74,222,128,0.5)]
+            transition
+            "
                     >
 
                         <div className="font-semibold">
@@ -149,50 +226,80 @@ export default function LeaguesPage() {
 
             </div>
 
-            {/* CREATE LEAGUE SECTION */}
+            {/* CREATE */}
 
-            <div className="mt-6">
+            <div className="mb-4 space-y-3">
 
-                {!creating && (
+                <button
+                    onClick={() => setShowCreate(!showCreate)}
+                    className="
+          w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
+          hover:border-green-400
+          hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+          transition
+          "
+                >
+                    Create League
+                </button>
 
-                    <button
-                        onClick={() => setCreating(true)}
-                        className="
-                        w-full border border-green-400 text-green-300 rounded-xl py-3
-                        hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
-                        transition
-                        "
-                    >
-                        Create League
-                    </button>
+                {showCreate && (
 
-                )}
-
-                {creating && (
-
-                    <div className="space-y-3">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
 
                         <input
-                            type="text"
-                            placeholder="League name"
                             value={leagueName}
                             onChange={(e) => setLeagueName(e.target.value)}
-                            className="
-                            w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3
-                            focus:outline-none focus:border-green-400
-                            "
+                            placeholder="League name"
+                            className="w-full bg-black border border-zinc-700 rounded-lg px-3 py-2 text-white outline-none"
                         />
 
                         <button
                             onClick={createLeague}
-                            disabled={submitting}
-                            className="
-                            w-full bg-zinc-900 border border-green-400 text-green-300 rounded-xl py-3
-                            hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
-                            transition
-                            "
+                            disabled={creating}
+                            className="w-full bg-black border border-zinc-700 rounded-lg py-2 hover:border-green-400"
                         >
-                            {submitting ? 'Creating...' : 'Create'}
+                            {creating ? 'Creating...' : 'Create'}
+                        </button>
+
+                    </div>
+
+                )}
+
+            </div>
+
+            {/* JOIN */}
+
+            <div className="mb-8 space-y-3">
+
+                <button
+                    onClick={() => setShowJoin(!showJoin)}
+                    className="
+          w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3
+          hover:border-green-400
+          hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]
+          transition
+          "
+                >
+                    Join League
+                </button>
+
+                {showJoin && (
+
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+
+                        <input
+                            value={inviteInput}
+                            onChange={(e) => setInviteInput(e.target.value)}
+                            placeholder="Enter invite code"
+                            className="w-full bg-black border border-zinc-700 rounded-lg px-3 py-2 text-white outline-none uppercase"
+                        />
+
+                        <button
+                            onClick={joinLeague}
+                            disabled={joining}
+                            className="w-full bg-black border border-zinc-700 rounded-lg py-2 hover:border-green-400"
+                        >
+                            {joining ? 'Joining...' : 'Join'}
                         </button>
 
                     </div>
