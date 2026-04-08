@@ -119,7 +119,11 @@ export default function PicksPage() {
   const now = new Date()
 
   const upcomingMatches = matches.filter(m => new Date(m.date) > now)
-  const pastMatches = matches.filter(m => new Date(m.date) <= now)
+
+  // ✅ Only show past matches that YOU picked
+  const pastMatches = matches.filter(m =>
+    new Date(m.date) <= now && picks[m.id]
+  )
 
   const displayedMatches =
     tab === 'upcoming' ? upcomingMatches : pastMatches
@@ -131,8 +135,11 @@ export default function PicksPage() {
     return acc
   }, {})
 
-  // ✅ NEW: pick counter
-  const pickCount = Object.keys(picks).length
+  // ✅ FINAL FIX: count ONLY picks within the active tab
+  const relevantMatches =
+    tab === 'upcoming' ? upcomingMatches : pastMatches
+
+  const pickCount = relevantMatches.filter(match => picks[match.id]).length
 
   function MatchCard(match: Match) {
 
@@ -159,7 +166,6 @@ export default function PicksPage() {
 
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-        {/* unchanged */}
         <div className="text-center mb-5">
           <div className="text-lg italic font-semibold text-zinc-300">
             {formatDate(match.date)}
@@ -275,8 +281,10 @@ export default function PicksPage() {
         </div>
       ))}
 
-      {/* ✅ pass count */}
-      <BottomNav pickCount={pickCount} />
+      <BottomNav
+        pickCount={pickCount}
+        label={tab === 'upcoming' ? 'Upcoming Picks' : 'Past Picks'}
+      />
 
     </div>
   )

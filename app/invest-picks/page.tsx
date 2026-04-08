@@ -66,6 +66,14 @@ function InvestPicksInner() {
                 user_id: userId,
                 balance_available: 1000
             })
+            return
+        }
+
+        if (data.balance_available === 100) {
+            await supabase
+                .from('user_investment_accounts')
+                .update({ balance_available: 1000 })
+                .eq('user_id', userId)
         }
     }
 
@@ -291,7 +299,7 @@ function InvestPicksInner() {
 
                         <div className="flex items-center justify-center gap-3">
                             <span className="text-xs text-white">HYSA</span>
-                            {[5, 10, 20, 50, 100].map(amount => {
+                            {[5, 10, 20].map(amount => {
                                 const active = hysa === amount
                                 return (
                                     <button
@@ -310,7 +318,7 @@ function InvestPicksInner() {
 
                         <div className="flex items-center justify-center gap-3">
                             <span className="text-xs text-white">ETF</span>
-                            {[5, 10, 20, 50, 100].map(amount => {
+                            {[5, 10, 20].map(amount => {
                                 const active = etf === amount
                                 return (
                                     <button

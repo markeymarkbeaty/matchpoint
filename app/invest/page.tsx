@@ -112,6 +112,19 @@ export default function InvestPage() {
         setLoading(false)
     }
 
+    // ✅ UPDATED REDIRECT ONLY
+    async function handleOptOut() {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        await supabase
+            .from('user_investment_accounts')
+            .update({ is_active: false })
+            .eq('user_id', user.id)
+
+        router.push('/invest-landing')
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-black text-white px-6 pt-14">
@@ -126,7 +139,6 @@ export default function InvestPage() {
 
             <div className="space-y-6">
 
-                {/* ✅ SINGLE ENTRY BUTTON */}
                 <button
                     onClick={() => router.push('/invest-picks')}
                     className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
@@ -134,7 +146,6 @@ export default function InvestPage() {
                     Go to Invest Picks
                 </button>
 
-                {/* ✅ EXISTING STATS BLOCK (UNCHANGED) */}
                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
 
                     <Stat label="Initial Deposit" value={`$${INITIAL_DEPOSIT}`} />
@@ -149,10 +160,17 @@ export default function InvestPage() {
                 </div>
 
                 <button
-                    onClick={() => router.push('/invest/returns')}
+                    onClick={() => router.push('/settle-investments')}
                     className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
                 >
                     View Returns
+                </button>
+
+                <button
+                    onClick={handleOptOut}
+                    className="w-full py-3 rounded-xl border border-red-500 text-red-400"
+                >
+                    Opt Out of Investing
                 </button>
 
             </div>
