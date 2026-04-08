@@ -131,6 +131,9 @@ export default function PicksPage() {
     return acc
   }, {})
 
+  // ✅ NEW: pick counter
+  const pickCount = Object.keys(picks).length
+
   function MatchCard(match: Match) {
 
     const userPick = picks[match.id]
@@ -156,7 +159,7 @@ export default function PicksPage() {
 
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-
+        {/* unchanged */}
         <div className="text-center mb-5">
           <div className="text-lg italic font-semibold text-zinc-300">
             {formatDate(match.date)}
@@ -171,7 +174,6 @@ export default function PicksPage() {
         </div>
 
         <div className="grid grid-cols-3 items-center mb-4">
-
           <div className="flex items-center gap-3">
             {match.home_logo && <img src={match.home_logo} className="w-9 h-9" />}
             <span className="font-semibold">{match.home_team}</span>
@@ -183,10 +185,8 @@ export default function PicksPage() {
             <span className="font-semibold">{match.away_team}</span>
             {match.away_logo && <img src={match.away_logo} className="w-9 h-9" />}
           </div>
-
         </div>
 
-        {/* ✅ ALWAYS SHOW BUTTONS */}
         <div className="grid grid-cols-3 gap-3">
           {['home', 'draw', 'away'].map((team) => {
 
@@ -203,8 +203,8 @@ export default function PicksPage() {
                 }
                 disabled={tab === 'results'}
                 className={`relative py-2 rounded-xl border text-white ${selected
-                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                    : 'border-zinc-700'
+                  ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                  : 'border-zinc-700'
                   } ${tab === 'results' && isWinner
                     ? 'bg-green-500/10'
                     : ''
@@ -213,40 +213,30 @@ export default function PicksPage() {
                 {team}
 
                 {selected && (
-                  <span className="absolute right-2 top-1 text-green-300">
-                    ✓
-                  </span>
+                  <span className="absolute right-2 top-1 text-green-300">✓</span>
                 )}
 
                 {tab === 'results' && isWinner && (
-                  <span className="absolute left-2 top-1 text-green-400">
-                    ★
-                  </span>
+                  <span className="absolute left-2 top-1 text-green-400">★</span>
                 )}
               </button>
             )
           })}
         </div>
 
-        {/* RESULT INFO */}
         {tab === 'results' && match.result && (
           <div className="space-y-2 mt-4 text-center">
-
             <div className="text-green-400 font-semibold">
               Your Pick: {pickedTeam}
             </div>
-
             <div className="text-zinc-300">
               Winner: {winningTeam}
             </div>
-
             <div className={`text-sm font-medium ${correct ? 'text-green-400' : 'text-red-400'}`}>
               {correct ? '✓ Correct Pick' : '✕ Incorrect Pick'}
             </div>
-
           </div>
         )}
-
       </div>
     )
   }
@@ -262,8 +252,8 @@ export default function PicksPage() {
             key={t}
             onClick={() => setTab(t as any)}
             className={`px-4 py-2 rounded-xl border ${tab === t
-                ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                : 'border-zinc-700'
+              ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+              : 'border-zinc-700'
               }`}
           >
             {t === 'upcoming' ? 'Upcoming' : 'Results'}
@@ -285,7 +275,9 @@ export default function PicksPage() {
         </div>
       ))}
 
-      <BottomNav />
+      {/* ✅ pass count */}
+      <BottomNav pickCount={pickCount} />
+
     </div>
   )
 }

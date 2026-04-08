@@ -11,19 +11,18 @@ export default function InvestPage() {
     const pathname = usePathname()
     const router = useRouter()
 
-    const INITIAL_DEPOSIT = 100
+    const INITIAL_DEPOSIT = 1000
 
     const [loading, setLoading] = useState(true)
-    const [joined, setJoined] = useState(false)
 
     const [wallet, setWallet] = useState(0)
     const [totalInvested, setTotalInvested] = useState(0)
 
     const [investmentType, setInvestmentType] = useState('HYSA')
 
-    // NEW
-    const [hysaTotal, setHysaTotal] = useState(0)
-    const [etfTotal, setEtfTotal] = useState(0)
+    const [hysaInvested, setHysaInvested] = useState(0)
+    const [etfInvested, setEtfInvested] = useState(0)
+    const [returnedTotal, setReturnedTotal] = useState(0)
 
     useEffect(() => {
         initialize()
@@ -32,11 +31,7 @@ export default function InvestPage() {
     async function initialize() {
 
         const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) {
-            setLoading(false)
-            return
-        }
+        if (!user) return setLoading(false)
 
         const { data: account } = await supabase
             .from('user_investment_accounts')
@@ -44,77 +39,77 @@ export default function InvestPage() {
             .eq('user_id', user.id)
             .maybeSingle()
 
-        if (account) {
-
-            setJoined(true)
-
-            if (account.account_type) {
-                setInvestmentType(account.account_type)
-            }
-
-            const { data: bets } = await supabase
-                .from('prediction_investments')
-                .select('*')
-                .eq('user_id', user.id)
-
-            let invested = 0
-            let hysa = 0
-            let etf = 0
-
-            bets?.forEach(b => {
-
-                const amt = Number(b.amount)
-
-                invested += amt
-
-                if (b.account_type === 'HYSA') hysa += amt
-                if (b.account_type === 'ETF') etf += amt
-
-            })
-
-            setTotalInvested(invested)
-            setWallet(INITIAL_DEPOSIT - invested)
-
-            // NEW
-            setHysaTotal(hysa)
-            setEtfTotal(etf)
-
+        if (account?.account_type) {
+            setInvestmentType(account.account_type)
         }
 
+        const { data: bets } = await supabase
+            .from('prediction_investments')
+            .select('*')
+            .eq('user_id', user.id)
+
+        const { data: matches } = await supabase
+            .from('matches')
+            .select('id, result')
+
+        const { data: picks } = await supabase
+            .from('picks')
+            .select('id, selected_team')
+
+        const matchMap: Record<string, any> = {}
+        matches?.forEach(m => {
+            matchMap[m.id] = m
+        })
+
+        const pickMap: Record<string, string> = {}
+        picks?.forEach(p => {
+            pickMap[p.id] = p.selected_team
+        })
+
+        let invested = 0
+        let hysaCorrect = 0
+        let etfCorrect = 0
+        let returned = 0
+
+        bets?.forEach(b => {
+
+            const amt = Number(b.amount)
+            invested += amt
+
+            const match = matchMap[b.match_id]
+            const selectedTeam = pickMap[b.pick_id]
+
+            if (!match || !match.result) return
+
+            const isCorrect =
+                selectedTeam && selectedTeam === match.result
+
+            if (b.account_type === 'HYSA') {
+                if (isCorrect) {
+                    hysaCorrect += amt
+                } else {
+                    returned += amt
+                }
+            }
+
+            if (b.account_type === 'ETF') {
+                if (isCorrect) {
+                    etfCorrect += amt
+                } else {
+                    returned += amt
+                }
+            }
+
+        })
+
+        setTotalInvested(invested)
+        setWallet(INITIAL_DEPOSIT - invested)
+
+        setHysaInvested(hysaCorrect)
+        setEtfInvested(etfCorrect)
+        setReturnedTotal(returned)
+
         setLoading(false)
-    }
-
-    async function updateInvestmentType(type: string) {
-
-        setInvestmentType(type)
-
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) return
-
-        await supabase
-            .from('user_investment_accounts')
-            .update({ account_type: type })
-            .eq('user_id', user.id)
-
-        router.push(`/invest-picks?mode=${type}`)
-    }
-
-    async function leaveInvesting() {
-
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) return
-
-        await supabase
-            .from('user_investment_accounts')
-            .update({
-                balance_available: 0,
-                account_type: null
-            })
-            .eq('user_id', user.id)
-
-        setJoined(false)
     }
 
     if (loading) {
@@ -131,84 +126,33 @@ export default function InvestPage() {
 
             <div className="space-y-6">
 
-                {/* Investment Type */}
+                {/* ✅ SINGLE ENTRY BUTTON */}
+                <button
+                    onClick={() => router.push('/invest-picks')}
+                    className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
+                >
+                    Go to Invest Picks
+                </button>
 
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-
-                    <div className="text-xs text-zinc-500 mb-3">
-                        Investment Type
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-
-                        {['HYSA', 'ETF'].map(type => {
-
-                            const selected = investmentType === type
-
-                            return (
-
-                                <div key={type}>
-
-                                    <button
-                                        onClick={() => updateInvestmentType(type)}
-                                        className={`w-full py-3 rounded-xl border ${selected
-                                            ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                                            : 'border-zinc-700 hover:border-green-400'
-                                            }`}
-                                    >
-                                        {type}
-                                    </button>
-
-                                    {/* NEW */}
-                                    <div className="text-xs text-zinc-500 text-center mt-1">
-                                        ${type === 'HYSA' ? hysaTotal : etfTotal} currently bet
-                                    </div>
-
-                                </div>
-
-                            )
-
-                        })}
-
-                    </div>
-
-                </div>
-
-                {/* Wallet Stats */}
-
+                {/* ✅ EXISTING STATS BLOCK (UNCHANGED) */}
                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
 
-                    <Stat
-                        label="Initial Deposit"
-                        value={`$${INITIAL_DEPOSIT}`}
-                    />
+                    <Stat label="Initial Deposit" value={`$${INITIAL_DEPOSIT}`} />
+                    <Stat label="Wallet Available to Invest" value={`$${wallet}`} />
+                    <Stat label="Total Invested" value={`$${totalInvested}`} />
 
-                    <Stat
-                        label="Wallet Available to Invest"
-                        value={`$${wallet}`}
-                    />
+                    <Stat label="HYSA Invested (Correct Picks)" value={`$${hysaInvested}`} />
+                    <Stat label="ETF Invested (Correct Picks)" value={`$${etfInvested}`} />
 
-                    <Stat
-                        label="Total Invested"
-                        value={`$${totalInvested}`}
-                    />
+                    <Stat label="Money Returned to Your Wallet" value={`$${returnedTotal}`} />
 
                 </div>
-
-                {/* Buttons */}
 
                 <button
                     onClick={() => router.push('/invest/returns')}
-                    className="w-full py-3 rounded-xl border border-green-400 text-green-300 hover:shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+                    className="w-full py-3 rounded-xl border border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]"
                 >
                     View Returns
-                </button>
-
-                <button
-                    onClick={leaveInvesting}
-                    className="w-full py-3 rounded-xl border border-red-500 text-red-400"
-                >
-                    Opt Out of Investing
                 </button>
 
             </div>
@@ -216,25 +160,14 @@ export default function InvestPage() {
             <BottomNav />
 
         </div>
-
     )
 }
 
 function Stat({ label, value }: { label: string, value: string }) {
-
     return (
-
         <div className="flex justify-between text-sm">
-
-            <div className="text-white">
-                {label}
-            </div>
-
-            <div className="text-green-400 font-semibold">
-                {value}
-            </div>
-
+            <div>{label}</div>
+            <div className="text-green-400 font-semibold">{value}</div>
         </div>
-
     )
 }
