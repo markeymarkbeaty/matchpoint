@@ -220,6 +220,36 @@ function InvestPicksInner() {
         return acc
     }, {})
 
+    // ✅ ADDITIVE COUNTER LOGIC
+    let hysaTotal = 0
+    let etfTotal = 0
+    let investedTotal = 0
+    let returnedTotal = 0
+
+    displayedMatches.forEach(match => {
+        const bet = bets[match.id]
+        if (!bet) return
+
+        const hysa = bet.HYSA || 0
+        const etf = bet.ETF || 0
+
+        hysaTotal += hysa
+        etfTotal += etf
+
+        const pick = picks[match.id]?.selected_team
+        const correct =
+            pick &&
+            match.result &&
+            pick === match.result
+
+        if (tab === 'results') {
+            if (correct) investedTotal += hysa + etf
+            else returnedTotal += hysa + etf
+        }
+    })
+
+    const totalBet = hysaTotal + etfTotal
+
     function MatchCard(match: Match) {
 
         const userPick = picks[match.id]?.selected_team
@@ -367,7 +397,21 @@ function InvestPicksInner() {
     return (
         <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-            <h1 className="text-3xl font-semibold mb-6">Invest</h1>
+            <h1 className="text-3xl font-semibold mb-2">Invest</h1>
+
+            {/* ✅ NEW COUNTER UI */}
+            <div className="text-zinc-400 text-sm mb-6 space-y-1">
+                <div>HYSA: ${hysaTotal}</div>
+                <div>ETF: ${etfTotal}</div>
+                <div>Total Bet: ${totalBet}</div>
+
+                {tab === 'results' && (
+                    <>
+                        <div className="text-green-400">Invested: ${investedTotal}</div>
+                        <div>Returned: ${returnedTotal}</div>
+                    </>
+                )}
+            </div>
 
             <div className="flex gap-3 mb-6">
                 {['upcoming', 'results'].map(t => (

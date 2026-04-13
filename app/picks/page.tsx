@@ -120,7 +120,6 @@ export default function PicksPage() {
 
   const upcomingMatches = matches.filter(m => new Date(m.date) > now)
 
-  // ✅ Only show past matches that YOU picked
   const pastMatches = matches.filter(m =>
     new Date(m.date) <= now && picks[m.id]
   )
@@ -135,14 +134,12 @@ export default function PicksPage() {
     return acc
   }, {})
 
-  // ✅ FINAL FIX: count ONLY picks within the active tab
   const relevantMatches =
     tab === 'upcoming' ? upcomingMatches : pastMatches
 
   const pickCount = relevantMatches.filter(match => picks[match.id]).length
 
   function MatchCard(match: Match) {
-
     const userPick = picks[match.id]
 
     const correct =
@@ -195,7 +192,6 @@ export default function PicksPage() {
 
         <div className="grid grid-cols-3 gap-3">
           {['home', 'draw', 'away'].map((team) => {
-
             const selected = picks[match.id] === team
             const isWinner = match.result === team
 
@@ -209,8 +205,8 @@ export default function PicksPage() {
                 }
                 disabled={tab === 'results'}
                 className={`relative py-2 rounded-xl border text-white ${selected
-                  ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-                  : 'border-zinc-700'
+                    ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                    : 'border-zinc-700'
                   } ${tab === 'results' && isWinner
                     ? 'bg-green-500/10'
                     : ''
@@ -250,7 +246,12 @@ export default function PicksPage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 pt-14 pb-32">
 
-      <h1 className="text-3xl font-semibold mb-6">Picks</h1>
+      <h1 className="text-3xl font-semibold mb-2">Picks</h1>
+
+      {/* ✅ NEW: Counter moved to top */}
+      <div className="text-zinc-400 text-sm mb-6">
+        {pickCount} {tab === 'upcoming' ? 'Upcoming Picks' : 'Past Picks'}
+      </div>
 
       <div className="flex gap-3 mb-6">
         {['upcoming', 'results'].map(t => (
@@ -258,8 +259,8 @@ export default function PicksPage() {
             key={t}
             onClick={() => setTab(t as any)}
             className={`px-4 py-2 rounded-xl border ${tab === t
-              ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
-              : 'border-zinc-700'
+                ? 'border-green-400 text-green-300 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
+                : 'border-zinc-700'
               }`}
           >
             {t === 'upcoming' ? 'Upcoming' : 'Results'}
@@ -281,10 +282,7 @@ export default function PicksPage() {
         </div>
       ))}
 
-      <BottomNav
-        pickCount={pickCount}
-        label={tab === 'upcoming' ? 'Upcoming Picks' : 'Past Picks'}
-      />
+      <BottomNav />
 
     </div>
   )
